@@ -1,7 +1,5 @@
 #include <Arduino.h>
 
-//This function make the robot move forwards for one 
-void goForwards(class robotPosition &botPos);
 
 //This function finds a path from point A to point B in an empty grid. 
 String empty_solver(byte startRow, byte startCol, char dir, byte destRow, byte destCol);
@@ -16,9 +14,6 @@ public:
   char botDirection;
 }; 
 
-void goForwards(class robotPosition &botPos){
-  
-}
 
 /******************************************************************
 *******************************************************************

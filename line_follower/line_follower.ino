@@ -10,6 +10,8 @@
 //This function changes the direction the robot is moving in. (forwards, backwards, clockwise, counterclockwise)
 void changeHeading();
 
+//This function make the robot move forwards for one 
+void goForwards(class robotPosition &botPos);
 //Make the robot turn 90 degrees either clockwise or counterclockwise. 
 void turn(class robotPosition &botPos, byte turnwise);
 //this function makes the robot follow the path found by the empty_solver function.
@@ -57,7 +59,7 @@ const int rightEnablePin = 11;
 
 //The speed of the motor (255 is the maximum)
 int motorSpeed = 255;
-global byte robot_heading = 0;
+byte robot_heading = 0;
 /* 0: Do nothing. 
  * 1: Go forwards. 
  * 2: Go in reverse. 
