@@ -204,6 +204,12 @@ void goForwards(class robotPosition &botPos) {
   while (true) {
     //Populate sensor array.
     for (byte i = 0; i < 4; i++) {
+        /*
+        if (i = 0 or i = 4) {
+          QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
+        } else {
+          QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+        }*/
         QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
@@ -226,7 +232,7 @@ void goForwards(class robotPosition &botPos) {
          Serial.write("Adjusting right\n"); 
     }
     
-    } if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
+    if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
         //we're crossing a line so we need to take note. 
         
         //Adjust the robot's position in botPos. 
@@ -239,11 +245,8 @@ void goForwards(class robotPosition &botPos) {
         } else if (botPos.botDirection == 'w') {
             botPos.botRow -= 1;
         }
+        
         break;
-    } else {
-        //Something's up: These cases shouldn't happen, or should only happen while turning. 
-        //Therefore do nothing. 
-        ;
     }
   }
   //change the robot's heading so that it's staying in place. 
@@ -263,7 +266,7 @@ void turn(class robotPosition &botPos, byte turnwise)  {
       
       //Read from sensors.
       for (byte i = 0; i < 5; i++) {
-        QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+        QRE_val_array[i] =  binary_readAnalogQ(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
         Serial.write(" ");
@@ -276,6 +279,7 @@ void turn(class robotPosition &botPos, byte turnwise)  {
           changeHeading(0);
           Serial.write("The front sensor detected that we'd completed a turn.");
           break;         
+      }
     }
     
     //For now, this is assuming 3 --> counterclockwise, 4 --> clockwise. 
