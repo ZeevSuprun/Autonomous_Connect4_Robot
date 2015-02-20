@@ -2,6 +2,7 @@
 #include <Arduino.h>
 
 int readQD(int pin);
+int readAnalogQRE(int pin);
 
 int readQD(int pin){
   //Returns value from the QRE1113 
@@ -26,3 +27,10 @@ int readQD(int pin){
   } 
 }
 
+//Code for the QRE1113 Analog board
+//Outputs via the serial terminal - Lower numbers mean more reflected
+int readAnalogQRE(int pin) {
+  int QRE_Value = analogRead(pin);
+  
+  return QRE_Value;
+}

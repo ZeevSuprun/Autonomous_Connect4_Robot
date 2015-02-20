@@ -17,14 +17,6 @@ void turn(class robotPosition &botPos, byte turnwise);
 //this function makes the robot follow the path found by the empty_solver function.
 void follow_directions(String  directions, class robotPosition &botPos);
 
-
-//Code for following a line.
-//Outputs via the serial terminal - Lower numbers mean more reflected
-//3000 or more means nothing was reflected.
-
-//HIGH --> black --> on the line
-//LOW --> white --> off the line 
-
 //The 5 line following pins. 
 
 //Rightmost sensor is pin 9. 
@@ -33,14 +25,15 @@ void follow_directions(String  directions, class robotPosition &botPos);
 //left sensor is pin 5
 //leftmost sensor is pin 4
 
-//Right now, leftmost and rightmost are both dead. 
+//left front sensor is pin __
+//right front sensor is pin __
 
-//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin. 
-const int QRE_pin_array[] = {4, 5, 8, 6, 9};
+//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin, 5: left-front pin 6: right-front pin.
+const int QRE_pin_array[] = {4, 5, 8, 6, 9, 10, 11};
 
 //Stores the values detected by the line sensors.
 //0: reading from leftmost QRE, 1: reading from left QRE, 2: centre QRE, 3: right QRE, 4: rightmost QRE. 
-int QRE_val_array[5];
+int QRE_val_array[7];
 
 
 /******************************************************************
@@ -49,16 +42,16 @@ int QRE_val_array[5];
 *******************************************************************
 *******************************************************************/
 //If leftDirectionPin is HIGH, motor goes forwards. 
-const int leftDirectionPin = 2;
+const int leftDirectionPin = 3;
 //If both are off, motor is off. 
-const int leftEnablePin = 10;
+const int leftEnablePin = 2;
 
 //Same thing but for right motor. 
-const int rightDirectionPin = 3;
-const int rightEnablePin = 11;
+const int rightDirectionPin = 5;
+const int rightEnablePin = 4;
 
 //The speed of the motor (255 is the maximum)
-int motorSpeed = 255;
+byte motorSpeed = 255;
 byte robot_heading = 0;
 /* 0: Do nothing. 
  * 1: Go forwards. 
@@ -78,10 +71,12 @@ String directions;
 int counter = 0;
 
 void setup(){
-    Serial.begin(9600);
+    
+    /*
+    Serial.begin(9600);   
     //setting pin modes.
    
-     //Motor pins 
+    //Motor pins 
     pinMode(leftDirectionPin, OUTPUT);
     pinMode(rightDirectionPin, OUTPUT);
     pinMode(leftEnablePin, OUTPUT);
@@ -99,9 +94,21 @@ void setup(){
     //Serial.print(directions);
     //Uncomment the line bellow to do direction following.
     //follow_directions(directions, botPos);
+    */
+//    changeHeading(2);
+          //Set left motor backwards. 
+      digitalWrite(leftDirectionPin, LOW);
+      analogWrite(leftEnablePin, motorSpeed);
+
+      //Set right motor backwards
+      digitalWrite(rightDirectionPin, LOW);
+      analogWrite(rightEnablePin, motorSpeed);
+      
+      Serial.print("done doing things.");    
 
 }
 void loop() {
+  /*
    //Uncomment this to test turning.
     //turn(botPos, 3);
     //delay(1000);
@@ -114,8 +121,7 @@ void loop() {
     //}
     
     //delay(1000);
-  
-    
+  */
 }
 
 /******************************************************************
@@ -188,37 +194,59 @@ void goForwards(class robotPosition &botPos) {
   changeHeading(2);
   //Delay long enough so that it doesn't immediately stop. 
   delay(1000);
+   
+  int error;
+  int k = 200;
+  //one of the motors will be modified by offset.
+  byte offset = 20;
+  byte turnOffset = 50;
   
   while (true) {
-    for (byte i = 1; i < 4; i++) {
-        QRE_val_array[i] =  readQD(QRE_pin_array[i]);
+    //Populate sensor array.
+    for (byte i = 0; i < 4; i++) {
+        QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
         Serial.write(" ");
     }
     Serial.write("\n");
-    //go forwards in a straight line. 
-    if (QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW) {
-    //if (true) {
+    
+    //The error is proportional to the distance of the center censor from the line it is following. 
+    error = (QRE_val_array[3] - QRE_val_array[1]) / (QRE_val_array[1] + QRE_val_array[2] + QRE_val_array[3]);
+    
+    /*
+    if (error < 0 ) {
+      //negative error means adjust left
+        analogWrite(leftEnablePin, motorSpeed -k*error);
+        analogWrite(rightEnablePin, motorSpeed);
+        Serial.write("Adjusting left\n");
+    } else {
+        //positive error, means adjust right. 
+         analogWrite(leftEnablePin, motorSpeed);
+         analogWrite(rightEnablePin, motorSpeed - k*error);
+         Serial.write("Adjusting right\n"); 
+    }
+    */
+    if (QRE_val_array[0] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[4] == LOW) {
         //Go straight
         //left motor is more powerful than the right motor so it's "default" is -60.
-        analogWrite(leftEnablePin, motorSpeed - 20);
+        analogWrite(leftEnablePin, motorSpeed - offset);
         analogWrite(rightEnablePin, motorSpeed);
 
         Serial.write("going forwards\n");
-    } else if (QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW) {
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[4] == LOW) {
         //adjust left. 
-        analogWrite(leftEnablePin, motorSpeed - 20 - 30);
+        analogWrite(leftEnablePin, motorSpeed - offset - turnOffset);
         analogWrite(rightEnablePin, motorSpeed);
-        Serial.write("Turning left\n");
-    } else if (QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH) {
+        Serial.write("Adjusting left\n");
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
         //adjust to right. 
         analogWrite(leftEnablePin, motorSpeed - 20);
-        analogWrite(rightEnablePin, motorSpeed - 30);
-        Serial.write("Turning right\n");
+        analogWrite(rightEnablePin, motorSpeed - turnOffset);
+        Serial.write("Adjusting right\n");
 
-    } else if (QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH) {
-        //we're crossing a line so we need to stop. 
+    } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
+        //we're crossing a line so we need to take note. 
         
         //Adjust the robot's position in botPos. 
         if (botPos.botDirection == 'n') {
@@ -231,12 +259,6 @@ void goForwards(class robotPosition &botPos) {
             botPos.botRow -= 1;
         }
         break;
-    } else if (QRE_val_array[1] == LOW and QRE_val_array[2] == LOW and QRE_val_array[3] == LOW) {
-        //we're off track, or are turning. 
-        //If we keep turning then we'll go completely off, so this means start going forwards again. 
-        //analogWrite(leftEnablePin, motorSpeed);
-        //analogWrite(rightEnablePin, motorSpeed);
-        
     } else {
         //Something's up: These cases shouldn't happen, or should only happen while turning. 
         //Therefore do nothing. 
@@ -252,16 +274,27 @@ void turn(class robotPosition &botPos, byte turnwise)  {
     //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is)
     //3 --> clockwise, 4 --> counterclockwise.
     changeHeading(turnwise);
-
     //Delay long enough so that it doesn't immediately stop turning. 
     delay(1000);
     
     while(true) {
       //Keep turning until we're on a line. 
+      
+      //Read from sensors.
+      for (byte i = 0; i < 5; i++) {
+        QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+        //To test what values the sensor array is reading. 
+        Serial.print(QRE_val_array[i]);
+        Serial.write(" ");
+      }
       if ( QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH) {
           changeHeading(0);
+          Serial.write("The between-the wheel sensors detected that we've completed a turn.");
           break;
-      }
+      } else if (QRE_val_array[5] == HIGH) {
+          changeHeading(0);
+          Serial.write("The front sensor detected that we'd completed a turn.");
+          break;         
     }
     
     //For now, this is assuming 3 --> counterclockwise, 4 --> clockwise. 
