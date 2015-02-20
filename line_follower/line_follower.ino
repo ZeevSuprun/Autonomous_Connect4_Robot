@@ -214,7 +214,6 @@ void goForwards(class robotPosition &botPos) {
     //The error is proportional to the distance of the center censor from the line it is following. 
     error = (QRE_val_array[3] - QRE_val_array[1]) / (QRE_val_array[1] + QRE_val_array[2] + QRE_val_array[3]);
     
-    /*
     if (error < 0 ) {
       //negative error means adjust left
         analogWrite(leftEnablePin, motorSpeed -k*error);
@@ -226,26 +225,8 @@ void goForwards(class robotPosition &botPos) {
          analogWrite(rightEnablePin, motorSpeed - k*error);
          Serial.write("Adjusting right\n"); 
     }
-    */
-    if (QRE_val_array[0] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[4] == LOW) {
-        //Go straight
-        //left motor is more powerful than the right motor so it's "default" is -60.
-        analogWrite(leftEnablePin, motorSpeed - offset);
-        analogWrite(rightEnablePin, motorSpeed);
-
-        Serial.write("going forwards\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[4] == LOW) {
-        //adjust left. 
-        analogWrite(leftEnablePin, motorSpeed - offset - turnOffset);
-        analogWrite(rightEnablePin, motorSpeed);
-        Serial.write("Adjusting left\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
-        //adjust to right. 
-        analogWrite(leftEnablePin, motorSpeed - 20);
-        analogWrite(rightEnablePin, motorSpeed - turnOffset);
-        Serial.write("Adjusting right\n");
-
-    } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
+    
+    } if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
         //we're crossing a line so we need to take note. 
         
         //Adjust the robot's position in botPos. 
