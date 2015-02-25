@@ -8,7 +8,8 @@
 #include "sensing.h"
 
 //This function changes the direction the robot is moving in. (forwards, backwards, clockwise, counterclockwise)
-void changeHeading();
+// 0: Do nothing.  1: Go forwards.  2: Go in reverse. 3: Turn right in place.  4: turn left in place. 
+void changeHeading(byte heading);
 
 //This function make the robot move forwards for one 
 void goForwards(class robotPosition &botPos);
@@ -17,23 +18,13 @@ void turn(class robotPosition &botPos, byte turnwise);
 //this function makes the robot follow the path found by the empty_solver function.
 void follow_directions(String  directions, class robotPosition &botPos);
 
-//The 5 line following pins. 
-
-//Rightmost sensor is pin 9. 
-//Right sensor is pin 6. 
-//center sensor is pin 8 
-//left sensor is pin 5
-//leftmost sensor is pin 4
-
-//left front sensor is pin __
-//right front sensor is pin __
-
-//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin, 5: left-front pin 6: right-front pin.
-const int QRE_pin_array[] = {4, 5, 8, 6, 9, 10, 11};
+//Line following sensors. 
+//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin, 5: front QRE pin.
+const int QRE_pin_array[] = {A5, A2, A1, A3, A4, A0};
 
 //Stores the values detected by the line sensors.
-//0: reading from leftmost QRE, 1: reading from left QRE, 2: centre QRE, 3: right QRE, 4: rightmost QRE. 
-int QRE_val_array[7];
+//0: reading from leftmost QRE, 1: reading from left QRE, 2: centre QRE, 3: right QRE, 4: rightmost QRE. 5: front QRE pin 
+int QRE_val_array[6];
 
 
 /******************************************************************
@@ -42,23 +33,17 @@ int QRE_val_array[7];
 *******************************************************************
 *******************************************************************/
 //If leftDirectionPin is HIGH, motor goes forwards. 
-const int leftDirectionPin = 3;
+const int leftDirectionPin = 5;
 //If both are off, motor is off. 
-const int leftEnablePin = 2;
+const int leftEnablePin = 4;
 
 //Same thing but for right motor. 
-const int rightDirectionPin = 5;
-const int rightEnablePin = 4;
+const int rightDirectionPin = 3;
+const int rightEnablePin = 2;
 
 //The speed of the motor (255 is the maximum)
 byte motorSpeed = 255;
-byte robot_heading = 0;
-/* 0: Do nothing. 
- * 1: Go forwards. 
- * 2: Go in reverse. 
- * 3: Turn right in place. 
- * 4: turn left in place. 
-*/
+
 
 
 /******************************************************************
@@ -95,16 +80,8 @@ void setup(){
     //Uncomment the line bellow to do direction following.
     //follow_directions(directions, botPos);
     */
-//    changeHeading(2);
+    changeHeading(1);
           //Set left motor backwards. 
-      digitalWrite(leftDirectionPin, LOW);
-      analogWrite(leftEnablePin, motorSpeed);
-
-      //Set right motor backwards
-      digitalWrite(rightDirectionPin, LOW);
-      analogWrite(rightEnablePin, motorSpeed);
-      
-      Serial.print("done doing things.");    
 
 }
 void loop() {
@@ -138,15 +115,14 @@ void changeHeading(byte heading) {
  * 3: Turn clockwise / right in place. 
  * 4: turn counterclockwise / left in place. 
 */
-  robot_heading = heading; 
 
-  if (robot_heading == 0) {
+  if (heading == 0) {
       //Stay still. 
       analogWrite(rightEnablePin, LOW);
       analogWrite(leftEnablePin, LOW);
       //Serial.write("The robot should not be moving.");
 
-  } else if (robot_heading == 1) {
+  } else if (heading == 1) {
       //Go forwards. 
       //Set left motor forwards. 
       digitalWrite(leftDirectionPin, HIGH);
@@ -155,7 +131,7 @@ void changeHeading(byte heading) {
       //Set right motor forwards. 
       digitalWrite(rightDirectionPin, HIGH);
       analogWrite(rightEnablePin, motorSpeed);
-  } else if (robot_heading == 2) {
+  } else if (heading == 2) {
       //Go backwards. 
       //Set left motor backwards. 
       digitalWrite(leftDirectionPin, LOW);
@@ -165,7 +141,7 @@ void changeHeading(byte heading) {
       digitalWrite(rightDirectionPin, LOW);
       analogWrite(rightEnablePin, motorSpeed);
             
-  } else if (robot_heading == 3) {
+  } else if (heading == 3) {
       //Turn counterclockwise. 
       //Set left motor forwards. 
       digitalWrite(leftDirectionPin, HIGH);
@@ -174,7 +150,7 @@ void changeHeading(byte heading) {
      //Set right motor backwards
       digitalWrite(rightDirectionPin, LOW);
       analogWrite(rightEnablePin, motorSpeed);
-  } else if (robot_heading == 4) {
+  } else if (heading == 4) {
       //Turn clockwise. 
       //Set left motor backwards. 
       digitalWrite(leftDirectionPin, LOW);
@@ -196,10 +172,7 @@ void goForwards(class robotPosition &botPos) {
   delay(1000);
    
   int error;
-  int k = 200;
-  //one of the motors will be modified by offset.
-  byte offset = 20;
-  byte turnOffset = 50;
+  int k = 100;
   
   while (true) {
     //Populate sensor array.
@@ -266,7 +239,7 @@ void turn(class robotPosition &botPos, byte turnwise)  {
       
       //Read from sensors.
       for (byte i = 0; i < 5; i++) {
-        QRE_val_array[i] =  binary_readAnalogQ(QRE_pin_array[i]);
+        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
         Serial.write(" ");

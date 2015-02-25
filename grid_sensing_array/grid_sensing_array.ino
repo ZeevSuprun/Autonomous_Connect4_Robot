@@ -1,8 +1,11 @@
 //This sketch reads and prints data from all of the line sensors. 
 
 
-//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin. 
-const int QRE_pin_array[] = {A0, A1, A2, A3, A4, A5};
+//element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin, 5: front.
+
+//front: A0, leftmost: a5, left: A2, center A1, right: A3
+
+const int QRE_pin_array[] = {A5, A2, A1, A3, A4, A0};
 //Stores the values detected by the line sensors.
 //0: reading from leftmost QRE, 1: reading from left QRE, 2: centre QRE, 3: right QRE, 4: rightmost QRE. 
 int QRE_val_array[5];
