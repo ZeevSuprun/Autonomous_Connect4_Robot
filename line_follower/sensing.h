@@ -37,7 +37,7 @@ int readAnalogQRE(int pin) {
 
 int binary_readAnalog(int pin) {
   int QRE_Value = analogRead(pin);
-  int threshold;
+  int threshold = 500;
   
   if (QRE_Value >= threshold){
        return HIGH;
