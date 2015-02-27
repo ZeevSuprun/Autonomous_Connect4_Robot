@@ -177,10 +177,6 @@ void goForwards(class robotPosition &botPos) {
   //Delay long enough so that it doesn't immediately stop. 
   delay(500);
    
-  float error;
-  int k = 60;
-  int threshold = 500;
-  
   while (true) {
     //Populate sensor array.
     for (byte i = 0; i < 5; i++) {
@@ -190,30 +186,36 @@ void goForwards(class robotPosition &botPos) {
         } else {
           QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
         }*/
-        QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+        QRE_val_array[i] =  binary_readAnalogQRE(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
         Serial.write(" ");
     }
     Serial.write("\n");
     
-    //The error is proportional to the distance of the center censor from the line it is following. 
-    error = float(QRE_val_array[3] - QRE_val_array[1]) / float(QRE_val_array[1] + QRE_val_array[2] + QRE_val_array[3]);
+    int offset = 0;
+    int turnOffset = 50;
     
-    if (error < 0 ) {
-      //negative error means adjust left
-        analogWrite(leftEnablePin, motorSpeed -k*error);
+    if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+        //if 0 0 0 0 0 Go straight
+        //left motor is more powerful than the right motor so it's "default" is -60.
+        analogWrite(leftEnablePin, motorSpeed - offset);
+        analogWrite(rightEnablePin, motorSpeed);
+
+        Serial.write("going forwards\n");
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+      //if 0 1 0 0 0 or 0 1 1 0 0 then adjust left.   
+        analogWrite(leftEnablePin, motorSpeed - offset - turnOffset);
         analogWrite(rightEnablePin, motorSpeed);
         Serial.write("Adjusting left\n");
-    } else {
-        //positive error, means adjust right. 
-         analogWrite(leftEnablePin, motorSpeed);
-         analogWrite(rightEnablePin, motorSpeed - k*error);
-         Serial.write("Adjusting right\n"); 
-    }
-    
-    if (QRE_val_array[0] > 500 and QRE_val_array[4] > 500) {
-        //we're crossing a line so we need to take note. 
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
+        //if 0 0 0 1 0 or 0 0 1 1 0 then adjust right
+        analogWrite(leftEnablePin, motorSpeed - offset);
+        analogWrite(rightEnablePin, motorSpeed - turnOffset);
+        Serial.write("Adjusting right\n");
+
+    } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
+         //we're crossing a line so we need to take note. 
         
         //Adjust the robot's position in botPos. 
         if (botPos.botDirection == 'n') {
@@ -225,8 +227,9 @@ void goForwards(class robotPosition &botPos) {
         } else if (botPos.botDirection == 'w') {
             botPos.botRow -= 1;
         }
-        break;
+        break; 
     }
+
   }
   //change the robot's heading so that it's staying in place. 
   changeHeading(0);
@@ -262,29 +265,29 @@ void turn(class robotPosition &botPos, byte turnwise)  {
       }
     }
     
-    //For now, this is assuming 3 --> counterclockwise, 4 --> clockwise. 
+    // 3 --> clockwise, 4 --> counterclockwise. 
     if(botPos.botDirection == 'n') {
-        if (turnwise == 3) {
+        if (turnwise == 4) {
           botPos.botDirection == 'w';
-        }else if (turnwise == 4) {
+        }else if (turnwise == 3) {
           botPos.botDirection == 'e';
         }
     } else if (botPos.botDirection == 'e') {
-      if (turnwise == 3) {
+      if (turnwise == 4) {
           botPos.botDirection == 'n';
-        }else if (turnwise == 4) {
+        }else if (turnwise == 3) {
           botPos.botDirection == 's';
         }
     } else if (botPos.botDirection == 's') {
-      if (turnwise == 3) {
+      if (turnwise == 4) {
           botPos.botDirection == 'e';
-        }else if (turnwise == 4) {
+        }else if (turnwise == 3) {
           botPos.botDirection == 'w';
         }
     } else if (botPos.botDirection == 'w') {
-      if (turnwise == 3) {
+      if (turnwise == 4) {
           botPos.botDirection == 's';
-        }else if (turnwise == 4) {
+        }else if (turnwise == 3) {
           botPos.botDirection == 'n';
         }
     }    
