@@ -33,17 +33,13 @@ int QRE_val_array[6];
 *******************************************************************
 *******************************************************************/
 //If leftDirectionPin is HIGH, motor goes forwards. 
-const int leftDirectionPin = 5;
+const int leftDirectionPin = 4;
 //If both are off, motor is off. 
-const int leftEnablePin = 4;
+const int leftEnablePin = 5;
 
 //Same thing but for right motor. 
-const int rightDirectionPin = 3;
-const int rightEnablePin = 2;
-
-//The speed of the motor (255 is the maximum)
-byte motorSpeed = 255;
-
+const int rightDirectionPin = 2;
+const int rightEnablePin = 3;
 
 
 /******************************************************************
@@ -54,10 +50,13 @@ byte motorSpeed = 255;
 robotPosition botPos;
 String directions;
 int counter = 0;
+//The speed of the motor (255 is the maximum)
+byte motorSpeed = 150;
 
 void setup(){
     
-    
+    changeHeading(0);
+
     Serial.begin(9600);   
     //setting pin modes.
    
@@ -81,10 +80,10 @@ void setup(){
     //follow_directions(directions, botPos);
     
     //
-    changeHeading(0);
     
-    delay(5000);
-    Serial.write("The robit is beginning to move.\n");
+    delay(2000);
+    changeHeading(1);
+    //Serial.write("The robit is beginning to move.\n");
 
 }
 void loop() {
@@ -93,7 +92,7 @@ void loop() {
     //turn(botPos, 3);
     //Serial.print("done turnin\n");
     //delay(5000);
-    
+    /*
     //while (counter < 3) {
     goForwards(botPos);  
     Serial.print("HELLO HUMAN OPERATOR PLEASE NOTICE THAT I HAVE CROSSED A LINE\n");
@@ -103,7 +102,7 @@ void loop() {
     //}
     
     //delay(1000);
-  
+  */
 }
 
 /******************************************************************
@@ -121,11 +120,12 @@ void changeHeading(byte heading) {
  * 4: turn counterclockwise / left in place. 
 */
 
-  //NOTE: FOR NOW, FORWARDS AND BACKWARDS, CLOCKWISE AND COUNTERCLOCKWISE ARE REVERSED
+  //NOTE: FOR NOW, FORWARDS AND BACKWARDS, CLOCKWISE AND COUNTERCLOCKWISE ARE REVERSED 
+  //This means that 
   if (heading == 0) {
       //Stay still. Stay silent. 
-      analogWrite(rightEnablePin, LOW);
-      analogWrite(leftEnablePin, LOW);
+      analogWrite(rightEnablePin, 0);
+      analogWrite(leftEnablePin, 0);
       //Serial.write("The robot should not be moving.");
 
   } else if (heading == 2) {
@@ -186,32 +186,34 @@ void goForwards(class robotPosition &botPos) {
         } else {
           QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
         }*/
-        QRE_val_array[i] =  binary_readAnalogQRE(QRE_pin_array[i]);
+        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
         Serial.write(" ");
     }
     Serial.write("\n");
     
-    int offset = 0;
-    int turnOffset = 50;
+    int leftOffset = 0;
+    int rightOffset = 20;
+    int turnOffset = 100;
     
-    if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
-        //if 0 0 0 0 0 Go straight
+    //if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+      if(true){
+      //if 0 0 0 0 0 Go straight
         //left motor is more powerful than the right motor so it's "default" is -60.
-        analogWrite(leftEnablePin, motorSpeed - offset);
-        analogWrite(rightEnablePin, motorSpeed);
+        analogWrite(leftEnablePin, motorSpeed - leftOffset);
+        analogWrite(rightEnablePin, motorSpeed - rightOffset);
 
         Serial.write("going forwards\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
-      //if 0 1 0 0 0 or 0 1 1 0 0 then adjust left.   
-        analogWrite(leftEnablePin, motorSpeed - offset - turnOffset);
-        analogWrite(rightEnablePin, motorSpeed);
+    } else if (QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW) {
+      //if - 1 - 0 -  then adjust left.   
+        analogWrite(leftEnablePin, motorSpeed - leftOffset - turnOffset);
+        analogWrite(rightEnablePin, motorSpeed - rightOffset);
         Serial.write("Adjusting left\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
-        //if 0 0 0 1 0 or 0 0 1 1 0 then adjust right
-        analogWrite(leftEnablePin, motorSpeed - offset);
-        analogWrite(rightEnablePin, motorSpeed - turnOffset);
+    } else if (QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH) {
+        //if - 0 - 1 - then adjust right
+        analogWrite(leftEnablePin, motorSpeed - leftOffset);
+        analogWrite(rightEnablePin, motorSpeed - rightOffset - turnOffset);
         Serial.write("Adjusting right\n");
 
     } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
