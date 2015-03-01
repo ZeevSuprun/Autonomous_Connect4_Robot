@@ -51,7 +51,7 @@ robotPosition botPos;
 String directions;
 int counter = 0;
 //The speed of the motor (255 is the maximum)
-byte motorSpeed = 150;
+byte motorSpeed = 255;
 
 void setup(){
     
@@ -81,8 +81,7 @@ void setup(){
     
     //
     
-    delay(2000);
-    changeHeading(1);
+    //delay(2000);
     //Serial.write("The robit is beginning to move.\n");
 
 }
@@ -92,17 +91,13 @@ void loop() {
     //turn(botPos, 3);
     //Serial.print("done turnin\n");
     //delay(5000);
-    /*
-    //while (counter < 3) {
-    goForwards(botPos);  
-    Serial.print("HELLO HUMAN OPERATOR PLEASE NOTICE THAT I HAVE CROSSED A LINE\n");
-    changeHeading(0);
-    delay(2000);
-      //counter += 1;
-    //}
     
-    //delay(1000);
-  */
+    
+    goForwards(botPos);  
+    //Serial.print("HELLO HUMAN OPERATOR PLEASE NOTICE THAT I HAVE CROSSED A LINE\n");
+    //changeHeading(0);
+    //delay(500);
+    
 }
 
 /******************************************************************
@@ -194,28 +189,29 @@ void goForwards(class robotPosition &botPos) {
     Serial.write("\n");
     
     int leftOffset = 0;
-    int rightOffset = 20;
-    int turnOffset = 100;
-    
-    //if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
-      if(true){
+    int rightOffset = 15;
+    float turnFactor = 0.4;
+
+    if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+      //if(true){  //Uncomment this line to test only going forward with the various offsets.
       //if 0 0 0 0 0 Go straight
         //left motor is more powerful than the right motor so it's "default" is -60.
         analogWrite(leftEnablePin, motorSpeed - leftOffset);
         analogWrite(rightEnablePin, motorSpeed - rightOffset);
 
-        Serial.write("going forwards\n");
+        //Serial.write("going forwards\n");
     } else if (QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW) {
-      //if - 1 - 0 -  then adjust left.   
-        analogWrite(leftEnablePin, motorSpeed - leftOffset - turnOffset);
+      //if - 1 - 0 -  then adjust left.
+        analogWrite(leftEnablePin, turnFactor*(motorSpeed - leftOffset));
         analogWrite(rightEnablePin, motorSpeed - rightOffset);
-        Serial.write("Adjusting left\n");
+        //Serial.write("Adjusting left\n");
     } else if (QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH) {
         //if - 0 - 1 - then adjust right
-        analogWrite(leftEnablePin, motorSpeed - leftOffset);
-        analogWrite(rightEnablePin, motorSpeed - rightOffset - turnOffset);
-        Serial.write("Adjusting right\n");
-
+        analogWrite(leftEnablePin, motorSpeed-leftOffset);
+        analogWrite(rightEnablePin, turnFactor*(motorSpeed - rightOffset));
+        
+        //Serial.write("Adjusting right\n");
+        
     } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
          //we're crossing a line so we need to take note. 
         
