@@ -42,13 +42,24 @@ const int leftEnablePin = 5;
 const int rightDirectionPin = 2;
 const int rightEnablePin = 3;
 
+//Dip switch pins
+//An array of dipswitch pins, from left to right. 
+int dipSwitchArray[] = {1, 2, 3, 4, 5 ,6, 7};
+
+
 
 /******************************************************************
 *******************************************************************
                       Setup and loop
 *******************************************************************
 *******************************************************************/
+char arena[8][7];
+//it's [row][column]. row 0 is top row. column 0 is leftmost column. arena is a 8 row by 7 column grid
+
 robotPosition botPos;
+hopperData leftHopper;
+hopperData rightHopper;
+
 String directions;
 int counter = 0;
 //The speed of the motor (255 is the maximum)
@@ -66,21 +77,59 @@ void setup(){
     pinMode(rightDirectionPin, OUTPUT);
     pinMode(leftEnablePin, OUTPUT);
     pinMode(rightEnablePin, OUTPUT);
-    //line pins. 
+    //line following sensor pins. 
     for (byte i = 0; i < 5; i++) {
         pinMode(QRE_pin_array[i], INPUT);
     }
+    //dip switch pins. 
+    for (int i = 0; i < 7; i++) {
+      pinMode(dipSwitchArray[i], INPUT);
+      digitalWrite(dipSwitchArray[i], HIGH);
+    }
+    //filling the game board
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 7; j++)
+        {
+            arena[i][j] = '0';
+        }
+    }
 
+    readSwitches(dipSwitchArray, leftHopper, rightHopper, arena);
+    Serial.print(leftHopper.hopperRow);
+    Serial.print(" ");
+    Serial.print(leftHopper.hopperCol);
+    Serial.print(" ");
+    Serial.print(leftHopper.orientation);
+    Serial.print("\n");
+    Serial.print(rightHopper.hopperRow);
+    Serial.print(" ");
+    Serial.print(rightHopper.hopperCol);
+    Serial.print(" ");
+    Serial.print(rightHopper.orientation);
+    
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 7; j++)
+        {
+            Serial.print(arena[i][j]);
+            Serial.print(" ");
+        }
+        Serial.print("\n");
+    }
+    Serial.print("------------------\n   0 1 2 3 4 5 6\n");
+
+    
     botPos.botRow = 7;
     botPos.botCol = 2;
     botPos.botDirection = 'n';
+    
+    
     
     //directions = empty_solver(7, 2, 'n', 5, 1);
     //Serial.print(directions);
     //Uncomment the line bellow to do direction following.
     //follow_directions(directions, botPos);
-    
-    //
     
     //delay(2000);
     //Serial.write("The robit is beginning to move.\n");
@@ -173,16 +222,16 @@ void goForwards(class robotPosition &botPos) {
   changeHeading(1);
   //Delay long enough so that it doesn't immediately stop. 
   delay(500);
-   
+  
+  int leftOffset = 0;
+  int rightOffset = 15;
+  float turnFactor = 0.4;
+  
+  //This variable will become true when the front end of the robot crosses a line.
+  boolean frontCrossedLine = false;
   while (true) {
     //Populate sensor array.
-    for (byte i = 0; i < 5; i++) {
-        /*
-        if (i = 0 or i = 4) {
-          QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
-        } else {
-          QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
-        }*/
+    for (byte i = 0; i < 6; i++) {
         QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
         Serial.print(QRE_val_array[i]);
@@ -190,10 +239,6 @@ void goForwards(class robotPosition &botPos) {
     }
     Serial.write("\n");
     
-    int leftOffset = 0;
-    int rightOffset = 15;
-    float turnFactor = 0.4;
-
     if ((QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) \ 
        or (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW)) {
       //if(true){  //Uncomment this line to test only going forward with the various offsets.
@@ -215,8 +260,11 @@ void goForwards(class robotPosition &botPos) {
         Serial.write("Adjusting right\n");
         
     } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
-         //we're crossing a line so we need to take note. 
-        
+         //we're crossing a line with the front end, so we need to take note. 
+         frontCrossedLine = true;
+    }
+    if (frontCrossedLine and QRE_val_array[5] == HIGH) {
+        //The robot's axis of rotation has crossed a line. 
         //Adjust the robot's position in botPos. 
         if (botPos.botDirection == 'n') {
             botPos.botCol -= 1;
@@ -252,13 +300,13 @@ void turn(class robotPosition &botPos, byte turnwise)  {
         Serial.write(" ");
       }
       Serial.write("\n");
-      if ( QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH) {
+      if (QRE_val_array[2] == HIGH) {
           changeHeading(0);
-          Serial.write("The between-the wheel sensors detected that we've completed a turn.\n");
+          Serial.write("The front sensors detected that we've completed a turn.\n");
           break;
       } else if (QRE_val_array[5] == HIGH) {
           changeHeading(0);
-          Serial.write("The front sensor detected that we'd completed a turn.\n");
+          Serial.write("The between-the-wheel sensor has detected that we've completed a turn.");
           break;         
       }
     }

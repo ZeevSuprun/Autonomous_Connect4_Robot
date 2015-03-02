@@ -25,12 +25,12 @@ public:
 //Note to self: I need to test these 2 functions independently. 
 //Given an array of switch pins and an empty arena, this function reads data from those switches to fill the arena 
 //by calling the add_hoppers function.
-void readSwitches(int dipSwitchArray[7], hopperData leftHopper, hopperData rightHopper, char arena[8][7]);
+void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]);
 //Given a character array arena of an empty board, this function adds hoppers to that array.
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
 
 //NOTE TO SELF THIS THING IS UNFINISHED
-void readSwitches(int dipSwitchArray[7], hopperData leftHopper, hopperData rightHopper, char arena[8][7]) {
+void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]) {
 
     int switchValArray[7];
     //Read the values of all of the switches. 
