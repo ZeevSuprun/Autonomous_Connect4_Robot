@@ -6,6 +6,7 @@
 
 #include "grid_following.h"
 #include "sensing.h"
+#include "maze_solving.h"
 
 //This function changes the direction the robot is moving in. (forwards, backwards, clockwise, counterclockwise)
 // 0: Do nothing.  1: Go forwards.  2: Go in reverse. 3: Turn right in place.  4: turn left in place. 
@@ -93,10 +94,11 @@ void loop() {
     //delay(5000);
     
     
-    goForwards(botPos);  
-    //Serial.print("HELLO HUMAN OPERATOR PLEASE NOTICE THAT I HAVE CROSSED A LINE\n");
+    //goForwards(botPos);
+    turn(botPos, 3);
+    Serial.print("HELLO HUMAN OPERATOR PLEASE NOTICE THAT I HAVE CROSSED A LINE\n");
     //changeHeading(0);
-    //delay(500);
+    delay(2000);
     
 }
 
@@ -192,25 +194,25 @@ void goForwards(class robotPosition &botPos) {
     int rightOffset = 15;
     float turnFactor = 0.4;
 
-    if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+    if ((QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) \ 
+       or (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW)) {
       //if(true){  //Uncomment this line to test only going forward with the various offsets.
-      //if 0 0 0 0 0 Go straight
+      //if 0 0 1 0 0  or 0 1 1 1 0 Go straight
         //left motor is more powerful than the right motor so it's "default" is -60.
         analogWrite(leftEnablePin, motorSpeed - leftOffset);
         analogWrite(rightEnablePin, motorSpeed - rightOffset);
 
-        //Serial.write("going forwards\n");
-    } else if (QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW) {
-      //if - 1 - 0 -  then adjust left.
+        Serial.write("going forwards\n");
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+      //if 0 1 - 0 0  then adjust left.
         analogWrite(leftEnablePin, turnFactor*(motorSpeed - leftOffset));
         analogWrite(rightEnablePin, motorSpeed - rightOffset);
-        //Serial.write("Adjusting left\n");
-    } else if (QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH) {
-        //if - 0 - 1 - then adjust right
+        Serial.write("Adjusting left\n");
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
+        //if 0 0 - 1 0 then adjust right
         analogWrite(leftEnablePin, motorSpeed-leftOffset);
         analogWrite(rightEnablePin, turnFactor*(motorSpeed - rightOffset));
-        
-        //Serial.write("Adjusting right\n");
+        Serial.write("Adjusting right\n");
         
     } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
          //we're crossing a line so we need to take note. 
@@ -227,12 +229,10 @@ void goForwards(class robotPosition &botPos) {
         }
         break; 
     }
-
   }
   //change the robot's heading so that it's staying in place. 
   changeHeading(0);
 }
-
 
 void turn(class robotPosition &botPos, byte turnwise)  {
     //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is)
@@ -248,8 +248,8 @@ void turn(class robotPosition &botPos, byte turnwise)  {
       for (byte i = 0; i < 6; i++) {
         QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
         //To test what values the sensor array is reading. 
-        //Serial.print(QRE_val_array[i]);
-        //Serial.write(" ");
+        Serial.print(QRE_val_array[i]);
+        Serial.write(" ");
       }
       Serial.write("\n");
       if ( QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH) {
