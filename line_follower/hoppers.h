@@ -15,6 +15,7 @@ public:
    byte hopperRow;
    //column can be 0,1,2,3
    byte hopperCol;
+   //0--> indiviual leg facing north, 1 --> individual leg facing south. 
    byte orientation;
    
    byte numBalls; 
@@ -29,43 +30,51 @@ void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hop
 //Given a character array arena of an empty board, this function adds hoppers to that array.
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
 
-//NOTE TO SELF THIS THING IS UNFINISHED
 void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]) {
-
+    //note: off is 1/HIGH and on is 0/LOW.
     int switchValArray[7];
     //Read the values of all of the switches. 
-    for (byte i = 0; i < 7; i++) {
-        switchValArray[i] = digitalRead(dipSwitchArray[i]);
-    }
+    //while(true) {
+      for (byte i = 0; i < 7; i++) {
+          switchValArray[i] = digitalRead(dipSwitchArray[i]);
+          Serial.print(switchValArray[i]);
+          Serial.print(" ");
+      }
+      Serial.print("\n");
+    //}
     //First 2 switches are a BCD between 0 and 2 representing left hopper row.
     //dipSwitchArray[2] is either 0 or 1, representing left hopper column. 
     //dipSwitchArray[3] is either 0 or 1, representing left hopper orientation.. 
     //dipSwitchArray[4] is either 0 or 1, representing right hopper column. (0 for row 2 and 1 for row 3)
     //dipSwitchArray[5] is either 0 or 1, representing right hopper oreintation.
     //dipSwitchArray[6] represents the ball colour. 0 for white, 1 for black. 
-    
-    //SETTING HOPPER ROW.
-    if (dipSwitchArray[0] == LOW and dipSwitchArray[1] == LOW) {
+    const int ON = 0;
+    const int OFF = 1;
+    //SETTING HOPPER ROW
+    //off off --> 0
+    if (dipSwitchArray[0] == OFF and dipSwitchArray[1] == OFF) {
         leftHopper.hopperRow = 0;
-    } else if (dipSwitchArray[0] == LOW and dipSwitchArray[1] == HIGH) {
+    //off on --> 1 
+    } else if (dipSwitchArray[0] == OFF and dipSwitchArray[1] == ON) {
         leftHopper.hopperRow = 1;
-    } else if (dipSwitchArray[0] == HIGH and dipSwitchArray[1] == LOW) {
+    //on off --> 2
+    } else if (dipSwitchArray[0] == ON and dipSwitchArray[1] == OFF) {
         leftHopper.hopperRow = 2;
     }
     
-    leftHopper.hopperCol = dipSwitchArray[2] == HIGH; 
-    leftHopper.orientation = dipSwitchArray[3] == HIGH;
+    //off --> 1 --> needs to = 0. on --> 0 --> hopperCol = 1
+    leftHopper.hopperCol = (dipSwitchArray[2] == ON); 
+    leftHopper.orientation = (dipSwitchArray[3] == ON);
     
     rightHopper.hopperRow = 2 - leftHopper.hopperCol;
-    rightHopper.hopperCol = (dipSwitchArray[4] == HIGH) + 2; 
-    rightHopper.orientation = (dipSwitchArray[5] == HIGH);
+    rightHopper.hopperCol = (dipSwitchArray[4] == ON) + 2; 
+    rightHopper.orientation = (dipSwitchArray[5] == ON);
     
-    //0 / low for white, 1 / HIGH for black. 
-    byte ballColour = (dipSwitchArray[5] == HIGH);
+    //On /LOW for white, off / HIGH for black. 
+    byte ballColour = (dipSwitchArray[5] == ON);
     
     add_hoppers(rightHopper.hopperRow, rightHopper.hopperCol, leftHopper.hopperCol, arena);
 }
-
 
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
     //This function adds the hopper positions as obstacles in the gameboard.
