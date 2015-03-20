@@ -62,7 +62,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
     //First, determine if we can get there right away. (same clear row as destination or same clear column as destination).
     if ((startRow == destRow) and (clearRows.indexOf(String(startRow)) != -1) or (startCol == destCol and clearCols.indexOf(String(startCol)) != -1)) {
        //If we're in the same clear row as destination or same clear column as destination then we can go straight there, find the path using emptySolver. 
-       path = empty_solver(startRow, startCol, dir, destRow, destCol);
+       path = horizontal_first(startRow, startCol, dir, destRow, destCol, arena);
        return path; 
     }
     
@@ -88,7 +88,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        //Now that we know what the nearest clear column is, we need to move to it.
        Serial.print("The nearest clear column is column ");
        Serial.println(nearestClearCol);
-       path += empty_solver(startRow, startCol, dir, startRow, nearestClearCol);
+       path += horizontal_first(startRow, startCol, dir, startRow, nearestClearCol, arena);
        currentCol = nearestClearCol;
     } else if(clearRows.indexOf(String(startRow)) == -1) {
          Serial.println("I'm not in a clear row");
@@ -108,7 +108,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        Serial.print("The nearest clear column is row ");
        Serial.println(nearestClearRow);
        //Now that we know what the nearest clear row is, we need to move to it.
-       path += empty_solver(startRow, startCol, dir, nearestClearRow, startCol);
+       path += horizontal_first(startRow, startCol, dir, nearestClearRow, startCol, arena);
        currentRow = nearestClearRow;
     }
     //We now have the path to the nearest clear intersection. From here we can go to the destination.
@@ -152,14 +152,20 @@ String horizontal_first(byte startRow, byte startCol, char &dir, byte destRow, b
     //bottom right corner is (7, 6)
     
     //first move to required column.
+    boolean crossRed = 0;
+
     if (startCol > destCol) {
         //I need to go west.
         
         //change direction to face west.
         path += change_dir(dir, 'w');
         dir = 'w';
+        if (3 < startCol and destCol < 3) {
+            //If it's passing through the red column.      
+            crossRed = 1;
+        }
         //Move forwards until I get to required position.
-        for (int i = startCol; i > destCol; i--) {
+        for (int i = startCol - crossRed; i > destCol; i--) {
             if(arena[startRow][i] == 'x') {
                 //If the path tries to go through a blocked space it won't work.
                 return "0";
@@ -172,9 +178,13 @@ String horizontal_first(byte startRow, byte startCol, char &dir, byte destRow, b
         //change direction to face east.
         path += change_dir(dir, 'e');
         dir = 'e';
-        
+        if (3 < destCol and startCol < 3) {
+            //If it's passing through the red column.      
+            crossRed = 1;
+        }        
+
         //Move forwards until I get to required position.
-        for (int i = startCol; i < destCol; i++) {
+        for (int i = startCol+ crossRed; i < destCol; i++) {
             if(arena[startRow][i] == 'x') {
                 //If the path tries to go through a blocked space it won't work.
                 return "0";
@@ -203,6 +213,7 @@ String horizontal_first(byte startRow, byte startCol, char &dir, byte destRow, b
         //change direction to face south.
         path += change_dir(dir, 's');
         dir = 's';
+
         //Move forwards until I get to required position.
         for (int i = startRow; i < destRow; i++) {
             if(arena[i][destCol] == 'x') {
@@ -254,7 +265,7 @@ String vertical_first(byte startRow, byte startCol, char &dir, byte destRow, byt
             path += "w";
         }
     }
-    
+    boolean crossRed = 0;
     //then move to required column.
     if (startCol > destCol) {
         //I need to go west.
@@ -263,7 +274,11 @@ String vertical_first(byte startRow, byte startCol, char &dir, byte destRow, byt
         path += change_dir(dir, 'w');
         dir = 'w';
         //Move forwards until I get to required position.
-        for (int i = startCol; i > destCol; i--) {
+        if (3 < startCol and destCol < 3) {
+            //If it's passing through the red column.      
+            crossRed = 1;
+        }
+        for (int i = startCol - crossRed; i > destCol; i--) {
             if(arena[destRow][i] == 'x') {
                 //If the path tries to go through a blocked space it won't work.
                 return "0";
@@ -272,13 +287,16 @@ String vertical_first(byte startRow, byte startCol, char &dir, byte destRow, byt
         }
     } else if (startCol < destCol) {
         //I need to go east.
-        
         //change direction to face east.
         path += change_dir(dir, 'e');
         dir = 'e';
+        if (3 < destCol and startCol < 3) {
+            //If it's passing through the red column.      
+            crossRed = 1;
+        }        
         
         //Move forwards until I get to required position.
-        for (int i = startCol; i < destCol; i++) {
+        for (int i = startCol + crossRed; i < destCol; i++) {
             if(arena[destRow][i] == 'x') {
                 //If the path tries to go through a blocked space it won't work.
                 return "0";

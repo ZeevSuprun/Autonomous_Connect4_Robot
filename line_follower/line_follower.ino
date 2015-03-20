@@ -8,6 +8,7 @@
 #include "sensing.h"
 #include "maze_solving.h"
 #include "non_mobility_motors.h"
+#include <Servo.h>
 
 //This function changes the direction the robot is moving in. (forwards, backwards, clockwise, counterclockwise)
 // 0: Do nothing.  1: Go forwards.  2: Go in reverse. 3: Turn right in place.  4: turn left in place. 
@@ -54,6 +55,11 @@ const int armDirectionPin = 53;
 
 const int hookEnablePin = 5;
 const int hookDirectionPin = 52;
+
+Servo gateServo;
+const int servoPin = 9;
+const byte closedAngle = 0;
+const byte openAngle = 90;
 
 /***********************dip switch pins**************************/
 //An array of dipswitch pins, from left to right. 
@@ -114,6 +120,8 @@ void setup(){
       digitalWrite(dipSwitchArray[i], HIGH);
     }
     
+    //gateServo.attach(servoPin);
+    //gateServo.write(closedAngle);
     //Interrupt pin.
     //pinMode(encoderPin, INPUT);
     
@@ -123,7 +131,7 @@ void setup(){
 *******************************************************************
 *******************************************************************/
 
-        //Turning off motors so they don't seizure during upload. 
+    //Turning off motors so they don't seizure during upload. 
     changeHeading(0);
     analogWrite(hookEnablePin, 0);
     analogWrite(armEnablePin, 0);
@@ -203,11 +211,6 @@ void setup(){
     //directions =  solve(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 0, arena);
     //Serial.print(directions);
     //Serial.print("we missed the boat");
-
-    botPos.botRow = 1;
-    botPos.botCol = 5;
-    botPos.botDirection = 's';
-    
     add_hoppers(0, 0, 3, arena);
     
     for (int i = 0; i < 8; i++) {
@@ -218,18 +221,36 @@ void setup(){
         Serial.print("\n");
     }
     Serial.print("------------------\n0 1 2 3 4 5 6\n");
+
+    botPos.botRow = 6;
+    botPos.botCol = 0;
+    botPos.botDirection = 'e';
     
-    directions = blockedSolver(1, 5, botPos.botDirection, 7, 4, arena);
+    directions = blockedSolver(6, 0, botPos.botDirection, 4, 2, arena);
     //directions = empty_solver(0, 2, 'n', 5, 1);
+    
     Serial.println(directions);  
-    //delay(5000);
-    //Serial.println("delay over");
+    Serial.println("Delay start");
+    delay(5000);
+    Serial.println("delay over");
+    follow_directions(directions, botPos);
     //inchForwardsWithoutLines(616);
     Serial.println("movement complete");
 }
 
 void loop() {
+  //goForwards(botPos);
   changeHeading(0);
+    /*
+    for (byte i = 0; i < 6; i++) {
+      QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+      //To test what values the sensor array is reading. 
+      Serial.print(QRE_val_array[i]);
+      Serial.print(" ");
+    }
+    Serial.print("\n");
+    delay(15);
+    */
   //goForwards(botPos);
 
 }
@@ -337,21 +358,41 @@ void goForwards(class robotPosition &botPos) {
         analogWrite(rightEnablePin, turnFactor*(motorSpeed - rightOffset));
         Serial.print("Adjusting right\n");
         
-    } else if (QRE_val_array[0] == HIGH and QRE_val_array[4] == HIGH) {
-         //we're crossing a line with the front end, so we need to take note. 
-    }
+    } else if (QRE_val_array[0] == HIGH and QRE_val_array[1] == LOW and QRE_val_array[2] == LOW and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
+         //1 0 0 0 0
+         //we're far off course, stop and turn left/counterclockwise.
+         turnAdjust(4);
+         changeHeading(1);
+         
+    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == LOW and QRE_val_array[3] == LOW and QRE_val_array[4] == HIGH) {
+          //0 0 0 0 1
+         //we're far off course to the right, stop and turn right/clockwise.
+         turnAdjust(3);
+         changeHeading(1);
+    } 
     if (QRE_val_array[5] == HIGH) {
         //The robot's axis of rotation has crossed a line. 
         //Adjust the robot's position in botPos. 
         if (botPos.botDirection == 'n') {
-            botPos.botCol -= 1;
-        } else if (botPos.botDirection == 's') {
-            botPos.botCol += 1;
-        } else if (botPos.botDirection == 'e') {
-            botPos.botRow += 1;
-        } else if (botPos.botDirection == 'w') {
             botPos.botRow -= 1;
+        } else if (botPos.botDirection == 's') {
+            botPos.botRow += 1;
+        } else if (botPos.botDirection == 'e') {
+            //This if statement accounts for the red line. 
+            if(botPos.botCol == 2) {
+              botPos.botCol += 2;
+            } else {
+              botPos.botCol += 1;
+            }
+        } else if (botPos.botDirection == 'w') {
+            //Taking into account the red line. 
+            if(botPos.botCol == 4) {
+              botPos.botCol -= 2;
+            } else {
+              botPos.botCol -= 1;
+            }
         }
+        Serial.println("A LINE HAS BEEN CROSSED");
         break; 
     }
   }
@@ -488,7 +529,11 @@ void turn(class robotPosition &botPos, byte turnwise)  {
     changeHeading(0);
     //Delay long enough so that it doesn't immediately stop turning. 
     changeHeading(turnwise);
-    delay(1000);
+    delay(500);
+    
+    
+    //unsigned long turnDuration;
+    //unsigned long startTime = millis();
     while(true) {
       //Keep turning until we're on a line. 
       
@@ -505,9 +550,15 @@ void turn(class robotPosition &botPos, byte turnwise)  {
           Serial.print("The front sensors detected that we've completed a turn.\n");
           break;
       }
+      /*
+      if (millis() - startTime >= turnDuration) {
+        break; 
+      }*/
+      
     }
     changeHeading(0);
     // 3 --> clockwise, 4 --> counterclockwise. 
+    //Change the direction we're facing in botPos. 
     if(botPos.botDirection == 'n') {
         if (turnwise == 4) {
           botPos.botDirection == 'w';
@@ -535,6 +586,42 @@ void turn(class robotPosition &botPos, byte turnwise)  {
     }    
 }
 
+void turnAdjust(byte turnwise)  {
+    //Controls the robot's wheels to make it turn until it finds the line again.
+    //3 --> clockwise, 4 --> counterclockwise.
+    Serial.print("The turn function has been called");
+    changeHeading(0);
+    //Delay long enough so that it doesn't immediately stop turning. 
+    changeHeading(turnwise);
+    delay(50);
+        
+    //unsigned long turnDuration;
+    //unsigned long startTime = millis();
+    while(true) {
+      //Keep turning until we're on a line. 
+      
+      //Read from sensors.
+      for (byte i = 0; i < 6; i++) {
+        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
+        //To test what values the sensor array is reading. 
+        Serial.print(QRE_val_array[i]);
+        Serial.print(" ");
+      }
+      Serial.print("\n");
+      if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
+          changeHeading(0);
+          Serial.print("The front sensors detected that we've completed a turn.\n");
+          break;
+      }
+      /*
+      if (millis() - startTime >= turnDuration) {
+        break; 
+      }*/
+    }
+    changeHeading(0);
+}
+
+
 void follow_directions(String  directions, class robotPosition &botPos) {
     //input is a string of directions (which we get from the output of empty_solver().)
     //This function calls all the lower level functions to make the robot follow the specified directions. 
@@ -547,7 +634,8 @@ void follow_directions(String  directions, class robotPosition &botPos) {
         } else if (directions[i] == 'q') {
             turn(botPos, 4); 
         }        
-    }    
+    }
+    changeHeading(0);    
 }
 
 /******************************************************************

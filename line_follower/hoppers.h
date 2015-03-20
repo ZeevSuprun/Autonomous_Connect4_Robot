@@ -92,7 +92,7 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
     //These variables are row caution and column caution.
     //if rc = 0, treat row caution squares as empty, else treat them as blocked.
     bool rc = 0;
-    bool cc = 0;
+    bool cc = 1;
     
     //filling in all the blocked grid points and all the maybes for hopper 1.
     for (int c = hop1_col+1; c < hop1_col+2 + 1; c++) {
@@ -107,7 +107,7 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
     }
     //filling in all the blocked grid points and all the maybes for hopper 2.
     for (int c = hop2_col+1; c < hop2_col+2 + 1; c++) {
-        for (int r = hop2_row+2 - 1*rc; r < hop2_row + 4 + 1; r++) {
+        for (int r = hop2_row+2 - 1*rc; r < hop2_row + 4 + 1*rc; r++) {
             arena[r][c] = 'x';
             if (cc and (hop2_col == 0 or hop2_col == 2)) {
                 arena[r][hop2_col+3] = 'x';
