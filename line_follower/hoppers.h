@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "maze_solving.h"
 
 class robotPosition {
   //This class keeps track of the robot's position.
@@ -18,10 +19,15 @@ public:
    //0--> indiviual leg facing north, 1 --> individual leg facing south. 
    byte orientation;
    
-   byte numBalls; 
-  
+   byte numBalls;
+   //the grid row and column you need to get to in order to enter the hopper and retrieve a ball. 
+   byte entryCol;
+   byte entryRow;
+   
+   hopperData(){
+     
+   }
 };
-
 
 //Note to self: I need to test these 2 functions independently. 
 //Given an array of switch pins and an empty arena, this function reads data from those switches to fill the arena 
@@ -29,6 +35,67 @@ public:
 void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]);
 //Given a character array arena of an empty board, this function adds hoppers to that array.
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
+//find the hopper nearest to the robot.
+String findNearestHopper(hopperData leftHop, hopperData rightHop, robotPosition botPos);
+//prints the game arena.
+void printArena(char arena[8][7]);
+//returns which column to place the ball in.
+int whereToPlace(int ballsPlacedSoFar);
+
+int whereToPlace(int ballsPlacedSoFar) {
+    //given how many balls were placed, return which column to place the next ball in.
+    //goes 3, then 4, then 2, then 5, repeat.
+    if (ballsPlacedSoFar % 4 == 0) {
+        return 3; 
+    } else if (ballsPlacedSoFar % 4 == 1) {
+        return 4;
+    } else if (ballsPlacedSoFar % 4 == 2) {
+        return 2;
+    } else if (ballsPlacedSoFar % 4 == 3) {
+        return 5;
+    } else {
+        //this should never happen
+        return 0;  
+    }
+}
+
+String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena [8][7], byte &hopperChosen) {
+    //hoppers = {fixed left, variable left, fixed right, variable right}
+    //String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte destCol, char arena[8][7]) {
+    
+    //stores the index of the nearest non empty hopper.
+    byte storedIndex = 0;
+    byte dist_to_nearest = 250;
+    String tempPath;
+    String bestPath = "";
+    //Iterate through the array of hoppers t
+    for (byte i = 0; i < 4; i++) {
+       if (hoppers[i].numBalls > 0) {
+         tempPath = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, hoppers[i].entryRow, hoppers[i].entryCol, arena);
+         if(tempPath.length() < dist_to_nearest) {
+            storedIndex = i;
+            dist_to_nearest = tempPath.length(); 
+            bestPath = tempPath;
+         }
+       }
+    }
+    //storedIndex now holds the index of the nearest hopper.
+    //bestPath is now the path to the nearest hopper.
+    hopperChosen = storedIndex;
+    return bestPath;
+}
+
+void printArena(char arena[8][7]) {
+     //Prints the game arena with hoppers and stuff.
+     for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 7; j++) {
+            Serial.print(arena[i][j]);
+            Serial.print(" ");
+        }
+        Serial.print("\n");
+    }
+    Serial.println("------------------\n0 1 2 3 4 5 6");
+}
 
 void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]) {
     //note: off is 1/HIGH and on is 0/LOW.
@@ -46,7 +113,7 @@ void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hop
     //dipSwitchArray[2] is either 0 or 1, representing left hopper column. 
     //dipSwitchArray[3] is either 0 or 1, representing left hopper orientation.. 
     //dipSwitchArray[4] is either 0 or 1, representing right hopper column. (0 for row 2 and 1 for row 3)
-    //dipSwitchArray[5] is either 0 or 1, representing right hopper oreintation.
+    //dipSwitchArray[5] is either 0 or 1, representing right hopper oreintation. //0 north, 1 south
     //dipSwitchArray[6] represents the ball colour. 0 for white, 1 for black. 
     const int ON = 0;
     const int OFF = 1;
@@ -91,8 +158,8 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
     
     //These variables are row caution and column caution.
     //if rc = 0, treat row caution squares as empty, else treat them as blocked.
-    bool rc = 0;
-    bool cc = 1;
+    boolean rc = 1;
+    boolean cc = 1;
     
     //filling in all the blocked grid points and all the maybes for hopper 1.
     for (int c = hop1_col+1; c < hop1_col+2 + 1; c++) {

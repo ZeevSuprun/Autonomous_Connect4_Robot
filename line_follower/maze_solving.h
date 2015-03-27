@@ -88,9 +88,9 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        //Now that we know what the nearest clear column is, we need to move to it.
        Serial.print("The nearest clear column is column ");
        Serial.println(nearestClearCol);
-       path += horizontal_first(startRow, startCol, dir, startRow, nearestClearCol, arena);
+       path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
        currentCol = nearestClearCol;
-    } else if(clearRows.indexOf(String(startRow)) == -1) {
+    } if(clearRows.indexOf(String(startRow)) == -1) {
          Serial.println("I'm not in a clear row");
         //If the robot isn't in a clear row, it must move to a clear row. 
        //First, find the nearest clear row.
@@ -108,7 +108,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        Serial.print("The nearest clear column is row ");
        Serial.println(nearestClearRow);
        //Now that we know what the nearest clear row is, we need to move to it.
-       path += horizontal_first(startRow, startCol, dir, nearestClearRow, startCol, arena);
+       path += horizontal_first(currentRow, currentCol, dir, nearestClearRow, currentCol, arena);
        currentRow = nearestClearRow;
     }
     //We now have the path to the nearest clear intersection. From here we can go to the destination.
