@@ -69,7 +69,31 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
     //vertical first string path.
     String vertFirst;
     
-    //First, determine if we can get there right away. (same clear row as destination or same clear column as destination).
+    //First, check if we are in a corner case and get out of the corner case if we are. 
+    if (clearCols.indexOf(String(startCol)) == -1 and clearRows.indexOf(String(startRow)) == -1) {
+       //if in neither a clear row or a clear column, then we need to get out first. 
+       
+       //first, find the nearest clear column. (there will always be a clear path to it).
+       int nearestClearCol=0;
+       int lowestDist = 8;
+       int dist;
+       for (int i = 0; i < clearCols.length(); i++) {
+           dist = abs(String(clearCols[i]).toInt() - startCol);
+           if (dist < lowestDist) {
+              lowestDist = dist;
+              //toInt() function works on strings but not characters. As a result this is convoluted. 
+              nearestClearCol = (String(clearCols[i])).toInt();
+           }
+       }
+       //Now that we know what the nearest clear column is, we need to move to it.
+       Serial.print("The nearest clear column is column ");
+       Serial.println(nearestClearCol);
+       path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
+       currentCol = nearestClearCol;
+    }
+    //We are now no longer in a corner case, if we were in one before. Now, we should check if there is an L-shaped or clear path to the goal. 
+    
+    //This if statement MIGHT be slightly more efficient then just skipping to the else block? Either way, it will work. 
     if ((startRow == destRow) and (clearRows.indexOf(String(startRow)) != -1) or (startCol == destCol and clearCols.indexOf(String(startCol)) != -1)) {
        //If we're in the same clear row as destination or same clear column as destination then we can go straight there, find the path using emptySolver. 
        path = horizontal_first(startRow, startCol, dir, destRow, destCol, arena);
@@ -92,57 +116,12 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
            dir = vertEndDir;
            return path;
         } 
-        //There is no L shaped path.
     }
     
-    //If there is no L shaped path, then either we're neither in a clear row or a clear column (i. e. corner case), or we are in one of the 2 and we need to get to a clear intersection.
+    //If there is no L shaped path, then we need to get to a clear intersection.
     
-    //If it's not in the same clear row or clear column as the destination already, we need to get to the nearest clear intersection.
-    //to do that, we must first find it.
-    
-    if (clearCols.indexOf(String(startCol)) == -1 and clearRows.indexOf(String(startRow)) == -1) {
-       //if in neither a clear row or a clear column, then we need to get out first. 
-       
-       //first, find the nearest clear column. (there will always be a clear path to it).
-       int nearestClearCol=0;
-       int lowestDist = 8;
-       int dist;
-       for (int i = 0; i < clearCols.length(); i++) {
-           dist = abs(String(clearCols[i]).toInt() - startCol);
-           if (dist < lowestDist) {
-              lowestDist = dist;
-              //toInt() function works on strings but not characters. As a result this is convoluted. 
-              nearestClearCol = (String(clearCols[i])).toInt();
-           }
-       }
-       //Now that we know what the nearest clear column is, we need to move to it.
-       Serial.print("The nearest clear column is column ");
-       Serial.println(nearestClearCol);
-       path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
-       currentCol = nearestClearCol;
-       
-       //from here, there should be an L shaped path to the end.
-        
-        //check if there's an L shaped path that gets to the end right away. 
-        horiEndDir = dir; 
-        horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
-        vertEndDir = dir;
-        vertFirst = vertical_first(currentRow, currentCol, vertEndDir, destRow, destCol, arena);
-        
-        if (horiFirst != "0") {
-           //the horizontal path works.
-           path += horiFirst; 
-           dir = horiEndDir;
-           return path;
-        } else if (vertFirst != "0") {
-           //the veritcal path works. 
-           path += vertFirst; 
-           dir = vertEndDir;
-           return path;
-        } 
-
-   
-    } else if (clearCols.indexOf(String(startCol)) == -1) {
+    //First, find the nearest clear intersection.
+   if (clearCols.indexOf(String(startCol)) == -1) {
        Serial.println("I'm not in a clear column");
        //If the robot isn't in a clear column, it must move to a clear column. 
        //First, find the nearest clear column.
@@ -161,7 +140,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        Serial.print("The nearest clear column is column ");
        Serial.println(nearestClearCol);
        path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
-       path += "  ";
+       //path += "  ";
        currentCol = nearestClearCol;
     } else if(clearRows.indexOf(String(startRow)) == -1) {
          Serial.println("I'm not in a clear row");
@@ -182,7 +161,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        Serial.println(nearestClearRow);
        //Now that we know what the nearest clear row is, we need to move to it.
        path += horizontal_first(currentRow, currentCol, dir, nearestClearRow, currentCol, arena);
-       path += "  ";
+       //path += "  ";
        currentRow = nearestClearRow;
     }
     //We now have the path to the nearest clear intersection. From here we can go to the destination.
@@ -204,10 +183,39 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        path += vertFirst; 
        dir = vertEndDir;
        return path;
-    } else {
-      //This should never happen, the robot is lost somehow. We need to decide on what the robot should do here. 
-      return "0"; 
     }
+    //The following should happen very rarely, if at all. 
+    
+    //If neither of the above if statements are true, then there is no L shaped path from this clear intersection, so we need to get to a different clear intersection.
+    //Any clear intersection in a different corner of the board will work.
+    //Arbitrarily choose to do a vertical change. (Move to a different clear intersection in the same column and a different row).
+    if((clearRows.length() == 2 and clearRows.indexOf(String(currentRow)) != 1) or clearRows.indexOf(String(currentRow)) < clearRows.length() - 2) {
+        //we need to go to clearRows[clearRows.length() - 1]
+        //We are in the first or one of the first rows in clearRows, we need to get to the last row in clearRows. 
+        path += vertical_first(currentRow, currentCol, dir, clearRows[clearRows.length() - 1], currentCol, arena);
+    } else {
+       //we are in the last or one of the last rows in clearRows, we need to get to the first row.  
+       path += vertical_first(currentRow, currentCol, dir, clearRows[0], currentCol, arena);
+    }
+    //we are now in the other intersection, time to L-shape. 
+    horiEndDir = dir; 
+    horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
+    vertEndDir = dir;
+    vertFirst = vertical_first(currentRow, currentCol, vertEndDir, destRow, destCol, arena);
+    
+    if (horiFirst != "0") {
+       //the horizontal path works.
+       path += horiFirst; 
+       dir = horiEndDir;
+       return path;
+    } else if (vertFirst != "0") {
+       //the veritcal path works. 
+       path += vertFirst; 
+       dir = vertEndDir;
+       return path;
+    }
+    //Now this should never happen, and if it does we're kind of fucked.
+    return "0"; 
 }
 
 
@@ -610,6 +618,201 @@ struct nodeList {
     }
     
 };
+
+String blockedSolverOld(byte startRow, byte startCol, char &dir, byte destRow, byte destCol, char arena[8][7]) {
+    //First need to get to a clear intersection.
+    //Given an array of clear rows and an array of clear columns.
+    //If I'm in a clear row, go to the clear column nearest to mine.
+    //If I'm in a clear column, go to the clear row nearest to mine.
+    String clearRows = "";
+    String clearCols = "";
+    byte currentRow = startRow;
+    byte currentCol = startCol;
+    
+    bool rowClear, colClear;
+    //Deterine which rows are clear.
+    for (int row = 0; row < 8; row++)
+    {
+        rowClear = true;
+        for (int col = 0; col < 7; col++)
+        {
+            if(arena[row][col] == 'x') {
+              rowClear = false;
+            }
+        }
+        if (rowClear) {
+            //append the row to the clearRows string. 
+            clearRows += row;
+        }
+    }
+    //determine which columns are clear.
+    for (int col = 0; col < 7; col++) {
+        colClear = true;
+        for (int row = 0; row < 8; row++) {
+            if(arena[row][col] == 'x') {
+                colClear = false;
+            }
+        }
+        if (colClear) {
+            //append the column to the clear columns string. 
+            clearCols += col;
+        }
+    }
+    
+    //Serial.print("Clear columns:");
+    //Serial.println(clearCols);
+    //Serial.print("Clear Rows:");
+    //Serial.println(clearRows);
+    String path = ""; 
+
+    //end direction if you go horizontally first.
+    char horiEndDir; 
+    //horizontal first path. 
+    String horiFirst;
+    //end direction if you go vertically first. 
+    char vertEndDir;
+    //vertical first string path.
+    String vertFirst;
+    
+    //First, determine if we can get there right away. (same clear row as destination or same clear column as destination).
+    if ((startRow == destRow) and (clearRows.indexOf(String(startRow)) != -1) or (startCol == destCol and clearCols.indexOf(String(startCol)) != -1)) {
+       //If we're in the same clear row as destination or same clear column as destination then we can go straight there, find the path using emptySolver. 
+       path = horizontal_first(startRow, startCol, dir, destRow, destCol, arena);
+       return path; 
+    } else {
+        //check if there's an L shaped path that gets to the end right away. 
+        horiEndDir = dir; 
+        horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
+        vertEndDir = dir;
+        vertFirst = vertical_first(currentRow, currentCol, vertEndDir, destRow, destCol, arena);
+        
+        if (horiFirst != "0") {
+           //the horizontal path works.
+           path += horiFirst; 
+           dir = horiEndDir;
+           return path;
+        } else if (vertFirst != "0") {
+           //the veritcal path works. 
+           path += vertFirst; 
+           dir = vertEndDir;
+           return path;
+        } 
+        //There is no L shaped path.
+    }
+    
+    //If there is no L shaped path, then either we're neither in a clear row or a clear column (i. e. corner case), or we are in one of the 2 and we need to get to a clear intersection.
+    
+    //If it's not in the same clear row or clear column as the destination already, we need to get to the nearest clear intersection.
+    //to do that, we must first find it.
+    
+    if (clearCols.indexOf(String(startCol)) == -1 and clearRows.indexOf(String(startRow)) == -1) {
+       //if in neither a clear row or a clear column, then we need to get out first. 
+       
+       //first, find the nearest clear column. (there will always be a clear path to it).
+       int nearestClearCol=0;
+       int lowestDist = 8;
+       int dist;
+       for (int i = 0; i < clearCols.length(); i++) {
+           dist = abs(String(clearCols[i]).toInt() - startCol);
+           if (dist < lowestDist) {
+              lowestDist = dist;
+              //toInt() function works on strings but not characters. As a result this is convoluted. 
+              nearestClearCol = (String(clearCols[i])).toInt();
+           }
+       }
+       //Now that we know what the nearest clear column is, we need to move to it.
+       Serial.print("The nearest clear column is column ");
+       Serial.println(nearestClearCol);
+       path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
+       currentCol = nearestClearCol;
+       
+       //from here, there should be an L shaped path to the end.
+        
+        //check if there's an L shaped path that gets to the end right away. 
+        horiEndDir = dir; 
+        horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
+        vertEndDir = dir;
+        vertFirst = vertical_first(currentRow, currentCol, vertEndDir, destRow, destCol, arena);
+        
+        if (horiFirst != "0") {
+           //the horizontal path works.
+           path += horiFirst; 
+           dir = horiEndDir;
+           return path;
+        } else if (vertFirst != "0") {
+           //the veritcal path works. 
+           path += vertFirst; 
+           dir = vertEndDir;
+           return path;
+        } 
+   
+    } else if (clearCols.indexOf(String(startCol)) == -1) {
+       Serial.println("I'm not in a clear column");
+       //If the robot isn't in a clear column, it must move to a clear column. 
+       //First, find the nearest clear column.
+       int nearestClearCol=0;
+       int lowestDist = 8;
+       int dist;
+       for (int i = 0; i < clearCols.length(); i++) {
+           dist = abs(String(clearCols[i]).toInt() - startCol);
+           if (dist < lowestDist) {
+              lowestDist = dist;
+              //toInt() function works on strings but not characters. As a result this is convoluted. 
+              nearestClearCol = (String(clearCols[i])).toInt();
+           }
+       }
+       //Now that we know what the nearest clear column is, we need to move to it.
+       Serial.print("The nearest clear column is column ");
+       Serial.println(nearestClearCol);
+       path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
+       path += "  ";
+       currentCol = nearestClearCol;
+    } else if(clearRows.indexOf(String(startRow)) == -1) {
+         Serial.println("I'm not in a clear row");
+        //If the robot isn't in a clear row, it must move to a clear row. 
+       //First, find the nearest clear row.
+       int nearestClearRow;
+       int lowestDist = 8;
+       int dist;
+       for (int i = 0; i < clearRows.length(); i++) {
+           dist = abs(String(clearCols[i]).toInt() - startRow);
+           if (dist < lowestDist) {
+              lowestDist = dist;
+              //toInt() function works on strings but not characters. As a result this is convoluted. 
+              nearestClearRow = (String(clearRows[i])).toInt();
+           }
+       }
+       Serial.print("The nearest clear column is row ");
+       Serial.println(nearestClearRow);
+       //Now that we know what the nearest clear row is, we need to move to it.
+       path += horizontal_first(currentRow, currentCol, dir, nearestClearRow, currentCol, arena);
+       path += "  ";
+       currentRow = nearestClearRow;
+    }
+    //We now have the path to the nearest clear intersection. From here we can go to the destination.
+    //There are 2 ways to go: horizontal first and vertical first. One of them is invalid.
+    
+    //direction is passed by reference, so we don't want to change dir before we know which of the 2 paths actually works. 
+    horiEndDir = dir; 
+    horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
+    vertEndDir = dir;
+    vertFirst = vertical_first(currentRow, currentCol, vertEndDir, destRow, destCol, arena);
+    
+    if (horiFirst != "0") {
+       //the horizontal path works.
+       path += horiFirst; 
+       dir = horiEndDir;
+       return path;
+    } else if (vertFirst != "0") {
+       //the veritcal path works. 
+       path += vertFirst; 
+       dir = vertEndDir;
+       return path;
+    } else {
+      //This should never happen, the robot is lost somehow. We need to decide on what the robot should do here. 
+      return "0"; 
+    }
+}
 
 String solve(byte startRow, byte startCol, char startDir, byte endRow, byte endCol, char arena[8][7]) {
     //this function returns a string that gives directions for the robot to follow to get from the start position to the end position. 
