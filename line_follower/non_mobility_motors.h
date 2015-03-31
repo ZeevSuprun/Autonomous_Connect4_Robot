@@ -51,10 +51,10 @@ void lowerArm(int directionPin, int enablePin) {
 
 
 
-void testMotor (int directionPin, int enablePin, int dir) {
+void testMotor (int directionPin, int enablePin, int dir, int duration) {
     //briefly actuate a motor in the "high" direction to see which direction the HIGH direction actually here. 
     digitalWrite(directionPin, dir);
-    analogWrite(enablePin, 200);
+    analogWrite(enablePin, duration);
     //delay(500);
     delay(1000);
     analogWrite(enablePin, 0);
@@ -84,5 +84,34 @@ void extend_retract_hook(int directionPin, int enablePin) {
     analogWrite(enablePin, 0);
 }
 
+void buttonHookMove(int directionPin, int enablePin, int buttonPin) {
+   byte hookSpeed = 100;         //hook speed between 0 and 255.    
+    //Make hook start extending. 
+    Serial.println("hook extending");
+    digitalWrite(directionPin, LOW);
+    analogWrite(enablePin, hookSpeed);    
+    //this variable will keep track of how long moving the hook takes. 
+    int buttonVal;
+    unsigned long moveTime = millis();
 
+    //wait for it to move into position and activate the button.
+    while (true) {
+        //read the button pin and break when the button is pressed.
+        buttonVal = digitalRead(buttonPin);
+        if (buttonVal == 0) {
+           digitalWrite(enablePin, 0);
+           break; 
+        }
+    }
+    //Determine how long the hook was running and store that value.
+    moveTime = millis() - moveTime;
+    //make hook start retracting.
+    digitalWrite(directionPin, HIGH);
+    analogWrite(enablePin, hookSpeed);    
+
+    //delay until it's done retracting.
+    delay(moveTime);
+    //stop retracting.
+    digitalWrite(enablePin, 0);
+}
 

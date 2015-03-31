@@ -23,6 +23,10 @@ public:
    //the grid row and column you need to get to in order to enter the hopper and retrieve a ball. 
    byte entryCol;
    byte entryRow;
+   //direction robot needs to be facing to enter the hopper.
+   char entryDir;
+   //robot must be entryAngle degrees clockwise from entryDir to enter the column.
+   int entryAngle;
    
    hopperData(){
      
@@ -32,7 +36,7 @@ public:
 //Note to self: I need to test these 2 functions independently. 
 //Given an array of switch pins and an empty arena, this function reads data from those switches to fill the arena 
 //by calling the add_hoppers function.
-void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]);
+void readSwitches(int dipSwitchArray[10], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]);
 //Given a character array arena of an empty board, this function adds hoppers to that array.
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
 //find the hopper nearest to the robot.
@@ -97,12 +101,12 @@ void printArena(char arena[8][7]) {
     Serial.println("------------------\n0 1 2 3 4 5 6");
 }
 
-void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]) {
+void readSwitches(int dipSwitchArray[10], class hopperData &leftHopper, class hopperData &rightHopper, char arena[8][7]) {
     //note: off is 1/HIGH and on is 0/LOW.
-    int switchValArray[7];
+    int switchValArray[10];
     //Read the values of all of the switches. 
     //while(true) {
-      for (byte i = 0; i < 7; i++) {
+      for (byte i = 0; i < 10; i++) {
           switchValArray[i] = digitalRead(dipSwitchArray[i]);
           Serial.print(switchValArray[i]);
           Serial.print(" ");
@@ -138,7 +142,7 @@ void readSwitches(int dipSwitchArray[7], class hopperData &leftHopper, class hop
     rightHopper.orientation = (dipSwitchArray[5] == ON);
     
     //On /LOW for white, off / HIGH for black. 
-    byte ballColour = (dipSwitchArray[5] == ON);
+    byte ballColour = (dipSwitchArray[6] == ON);
     
     add_hoppers(rightHopper.hopperRow, rightHopper.hopperCol, leftHopper.hopperCol, arena);
 }
@@ -183,5 +187,63 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
             }
         }
     }    
+}
+
+void hopperApproachSquare(class hopperData &hop) {
+   //Given a non-corner hopper that already has a row, column and orientation, give a value to entryCol and entryRow
+   if (hop.hopperCol == 0) {
+       hop.entryCol = 2; 
+       if(hop.orientation == 0) {
+           //if hopper facing north
+           hop.entryRow = hop.hopperRow + 4;
+           hop.entryDir = 'n';
+           hop.entryAngle = 0;
+       } else if (hop.orientation == 1) {
+           //if hopper facing south
+           hop.entryRow = hop.hopperRow + 1;
+           hop.entryDir = 's';
+           hop.entryAngle = 0;
+       }
+   } else if (hop.hopperCol == 1) {
+       hop.entryCol = 1; 
+       if(hop.orientation == 0) {
+           //if hopper facing north
+           hop.entryRow = hop.hopperRow + 2;
+           hop.entryDir = 's';
+           hop.entryAngle = -45;
+       } else if (hop.orientation == 1) {
+           //if hopper facing south
+           hop.entryRow = hop.hopperRow + 3;
+           hop.entryDir = 'n';
+           hop.entryAngle = 45;
+       }     
+   } else if (hop.hopperCol == 2) {
+       hop.entryCol = 5;
+       if(hop.orientation == 0) {
+           //if hopper facing north
+           hop.entryRow = hop.hopperRow + 2;
+           hop.entryDir = 's';
+           hop.entryAngle = 45;
+       } else if (hop.orientation == 1) {
+           //if hopper facing south
+           hop.entryRow = hop.hopperRow + 3;
+           hop.entryDir = 'n';
+           hop.entryAngle = -45;
+       }     
+   } else if (hop.hopperCol == 3) {
+       hop.entryCol = 4; 
+       if(hop.orientation == 0) {
+           //if hopper facing north
+           hop.entryRow = hop.hopperRow + 4;
+           hop.entryDir = 'n';
+           hop.entryAngle = 0;
+       } else if (hop.orientation == 1) {
+           //if hopper facing south
+           hop.entryRow = hop.hopperRow + 1;
+           hop.entryDir = 's';
+           //exact hopper entry angles unknown for now. 
+           hop.entryAngle = -10;
+       }     
+   } 
 }
 

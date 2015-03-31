@@ -48,19 +48,19 @@ int QRE_val_array[6];
 
 /***********************navigation motor pins**************************/
 //If leftDirectionPin is HIGH, left motor goes forwards. 
-const int leftEnablePin = 6;
-const int leftDirectionPin = 40;
+const int leftEnablePin = 3;
+const int leftDirectionPin = 52;
 
 //Same thing but for right motor. 
-const int rightEnablePin = 5;
-const int rightDirectionPin = 22;
+const int rightEnablePin = 4;
+const int rightDirectionPin = 53;
 
 /***********************Other Motor Pins**************************/
-const int armEnablePin = 9;
-const int armDirectionPin = 51;
+const int armEnablePin = 5;
+const int armDirectionPin = 50;
 
-const int hookEnablePin = 8;
-const int hookDirectionPin = 53;
+const int hookEnablePin = 6;
+const int hookDirectionPin = 51;
 
 Servo gateServo;
 const int servoPin = 13;
@@ -69,8 +69,10 @@ const int servoPin = 13;
 //An array of dipswitch pins, from left to right. 
 //4, 5, 6, 7, 8, 9, 10
 
-int dipSwitchArray[] = {41, 48, 46, 45, 43, 39, 50};
-
+int dipSwitchArray[] = {31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
+const int hookEndPin = 14;
+const int rightTouchSensorPin = 15;
+const int leftTouchSensorPin = 16;
 /***********************wheel encoding pins**************************/
 /*
 //I need to remember to change this to leftEncoderCount
@@ -123,10 +125,18 @@ void setup(){
         pinMode(QRE_pin_array[i], INPUT);
     }
     //dip switch pins. 
-    for (byte i = 0; i < 7; i++) {
+    for (byte i = 0; i < 10; i++) {
       pinMode(dipSwitchArray[i], INPUT);
       digitalWrite(dipSwitchArray[i], HIGH);
     }
+    //setting up touch sensor thingies.
+    pinMode(hookEndPin, INPUT);
+    digitalWrite(hookEndPin, HIGH);
+    pinMode(rightTouchSensorPin, INPUT);
+    digitalWrite(rightTouchSensorPin, HIGH);
+    pinMode(leftTouchSensorPin, INPUT);
+    digitalWrite(leftTouchSensorPin, HIGH);
+
     
     byte closedAngle = 0;
     byte openAngle = 180;
@@ -185,18 +195,15 @@ void setup(){
     
     //printArena(arena);
     
-    botPos.botRow = 2;
+    botPos.botRow = 0;
     botPos.botCol = 0;
-    botPos.botDirection = 'n';
+    botPos.botDirection = 's';
               
     //To start on the red lne use row = 6 or 7, col = 3, dir = 'n', to same row, 5.
 
     Serial.print("delay starts\n");
     delay(5000);
     Serial.print("Delay over\n");
-    //testMotor(armDirectionPin, armEnablePin);
-    //testMotor(hookDirectionPin, hookEnablePin);
-    //extend_retract_hook(hookDirectionPin, hookEnablePin);
     
     //distance to get to column X, in cm, from (0,3): DISTANCE=4.553571429*column+5.867857143. Time to move distance: time = 120.71*(Distance)+25.706
     //**************************************************************************************************************
@@ -207,21 +214,21 @@ void setup(){
     //int colNum = 0;
     //inchForwards(550*colNum + 152);
     
-    int testFunction = -2;
+    int testFunction = -3;
+    
     /*
     printArena(arena);
-       directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena);
-       directions += change_dir(botPos.botDirection, 'e');
-       Serial.println(directions);
-  */
-    
+    directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena);
+    directions += change_dir(botPos.botDirection, 'e');
+    Serial.println(directions);
+    */
     //change the variable testFunction to choose which huge block of code to test.
-    if (testFunction == -3) {
+    if (testFunction == -1) {
         //do nothing
        //raiseArm(armDirectionPin, armEnablePin);
        //ARM: lowering the arm --> HIGH, raising the arm --> LOW
        //HOOK: Extending hook --> LOW retracting hook --> HIGH
-       testMotor(hookDirectionPin, hookEnablePin, LOW);
+       testMotor(hookDirectionPin, hookEnablePin, LOW, 2000);
        //testMotor(hookDirectionPin, hookEnablePin, HIGH);
       
     } else if (testFunction == -2) {
@@ -237,11 +244,24 @@ void setup(){
         //wait for long enough for the ball to roll into the connect 4 board.
         delay(1000);
         gateServo.write(closedAngle);
-    } else if (testFunction == -1) {
-      gateServo.write(openAngle);
-      delay(1000);
-      gateServo.write(closedAngle);
-    }else if (testFunction == 1 or testFunction == 6) {
+/******************************************************************
+********************************************************************/
+    } else if (testFunction == -3) {
+        int buttonVal;
+        while (true) {
+          //read the button pin and break when the button is pressed.
+          buttonVal = digitalRead(hookEndPin);
+          Serial.println(buttonVal);
+          delay(15);
+        }
+    } else if (testFunction == -3) {
+        unsigned long turnDuration = 1350;
+        controlledTurn(turnDuration, 4);
+        changeHeading(2);
+        delay(2000);
+        changeHeading(0);
+
+    } else if (testFunction == 1 or testFunction == 6) {
        //We are testing controlled locomotion: going from point A to point B, going around hoppers. 
        //Find the path.
        directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 7, 2, arena);
@@ -321,14 +341,12 @@ void setup(){
 }
 
 void loop() {
-  //inchForwards(5000);
-  //goForwards(botPos);
-  changeHeading(0);
-
-  //raiseArm(armDirectionPin, armEnablePin);
-  //Serial.println("I'm trying");
-
-    
+    //inchForwards(5000);
+    //goForwards(botPos);
+    changeHeading(0);
+    //raiseArm(armDirectionPin, armEnablePin);
+    //Serial.println("I'm trying");
+    /*
     for (byte i = 0; i < 6; i++) {
       QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
       //To test what values the sensor array is reading. 
@@ -337,16 +355,7 @@ void loop() {
     }
     Serial.print("\n");
     delay(15);
-    
-  //goForwards(botPos);
-  /*
-  changeHeading(1);
-  Serial.print("Forwards");
-  delay(2000);
-  changeHeading(0);
-  Serial.print("Stopping");
-  delay(2000);
-  */
+    */
 }
 
 /******************************************************************
@@ -372,8 +381,8 @@ void changeHeading(byte heading) {
       analogWrite(leftEnablePin, 0);
       //Serial.print("The robot should not be moving.");
 
-  } else if (heading == 3) {
-      //Go forwards. CLOCKWISE FOR NOW
+  } else if (heading == 4) {
+      //Go forwards. COUNTERCLOCKWISE FOR NOW
       //Set left motor forwards. 
       digitalWrite(leftDirectionPin, HIGH);
       analogWrite(leftEnablePin, motorSpeed);
@@ -381,8 +390,8 @@ void changeHeading(byte heading) {
       //Set right motor forwards. 
       digitalWrite(rightDirectionPin, HIGH);
       analogWrite(rightEnablePin, motorSpeed);
-  } else if (heading == 4) {
-      //Go backwards. (COUNTERCLOCKWISE FOR NOW)
+  } else if (heading == 3) {
+      //Go backwards. (CLOCKWISE FOR NOW)
       //Set left motor backwards. 
       digitalWrite(leftDirectionPin, LOW);
       analogWrite(leftEnablePin, motorSpeed);
@@ -391,16 +400,16 @@ void changeHeading(byte heading) {
       digitalWrite(rightDirectionPin, LOW);
       analogWrite(rightEnablePin, motorSpeed);
             
-  } else if (heading == 1) {
-      //Turn counterclockwise. FORWARDS FOR NOW
+  } else if (heading == 2) {
+      //Turn counterclockwise. BACKWARDS FOR NOW
       //Set left motor forwards. 
       digitalWrite(leftDirectionPin, HIGH);
       analogWrite(leftEnablePin, motorSpeed);
      //Set right motor backwards
       digitalWrite(rightDirectionPin, LOW);
       analogWrite(rightEnablePin, motorSpeed);
-  } else if (heading == 2) {
-      //Turn clockwise. GO BACKWARDS FOR NOW.
+  } else if (heading == 1) {
+      //Turn clockwise. GO FORWARDSS FOR NOW.
       //Set left motor backwards. 
       digitalWrite(leftDirectionPin, LOW);
       analogWrite(leftEnablePin, motorSpeed);
@@ -675,32 +684,21 @@ void controlledTurn(unsigned long turnDuration, byte turnwise) {
     //3 --> clockwise, 4 --> counterclockwise.
     Serial.print("The turn function has been called");
     changeHeading(0);
-    //Delay long enough so that it doesn't immediately stop turning.
-     
+    
+    byte storedSpeed = motorSpeed;
+    //the speed to move forwards at slowly.
+    motorSpeed = slowSpeed;  
+
     changeHeading(turnwise);
     
     unsigned long startTime = millis();
     while(true) {
-      //Keep turning until we're on a line. 
-      /*
-      //Read from sensors.
-      for (byte i = 0; i < 6; i++) {
-        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
-        //To test what values the sensor array is reading. 
-        Serial.print(QRE_val_array[i]);
-        Serial.print(" ");
-      }
-      Serial.print("\n");
-      if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
-          changeHeading(0);
-          Serial.print("The front sensors detected that we've completed a turn.\n");
-          break;
-      }
-      */
+      //turn for a certain duration.
       if (millis() - startTime >= turnDuration) {
         break; 
       }
     }
+    motorSpeed = storedSpeed;
     changeHeading(0);    
 }
 
