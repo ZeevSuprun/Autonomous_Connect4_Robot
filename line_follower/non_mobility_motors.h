@@ -23,8 +23,8 @@ void raise_lower_arm(int directionPin, int enablePin) {
 
 void raiseArm(int directionPin, int enablePin) {
   //This function lowers the arm and then raises it. 
-    byte optimalArmSpeed = 200;  //arm speed between 0 and 255.
-    int delaytime = 1100;         //time for arm to get into position in milliseconds. 
+    byte optimalArmSpeed = 255;  //arm speed between 0 and 255.
+    int delaytime = 3000;         //time for arm to get into position in milliseconds. 
     
     //get it moving in the right direction. 
     Serial.println("Arm is raising");
@@ -37,8 +37,8 @@ void raiseArm(int directionPin, int enablePin) {
 }
 
 void lowerArm(int directionPin, int enablePin) {
-    byte optimalArmSpeed = 200;  //arm speed between 0 and 255.
-    int delaytime = 1100;         //time for arm to get into position in milliseconds. 
+    byte optimalArmSpeed = 255;  //arm speed between 0 and 255.
+    int delaytime = 3000;         //time for arm to get into position in milliseconds. 
     //get it moving in the right direction. 
     Serial.print("arm is lowering");
     digitalWrite(directionPin, HIGH);
@@ -54,9 +54,9 @@ void lowerArm(int directionPin, int enablePin) {
 void testMotor (int directionPin, int enablePin, int dir, int duration) {
     //briefly actuate a motor in the "high" direction to see which direction the HIGH direction actually here. 
     digitalWrite(directionPin, dir);
-    analogWrite(enablePin, duration);
+    analogWrite(enablePin, 255);
     //delay(500);
-    delay(1000);
+    delay(duration);
     analogWrite(enablePin, 0);
 }
 
@@ -85,7 +85,7 @@ void extend_retract_hook(int directionPin, int enablePin) {
 }
 
 void buttonHookMove(int directionPin, int enablePin, int buttonPin) {
-   byte hookSpeed = 100;         //hook speed between 0 and 255.    
+   byte hookSpeed = 255;         //hook speed between 0 and 255.    
     //Make hook start extending. 
     Serial.println("hook extending");
     digitalWrite(directionPin, LOW);
@@ -103,14 +103,18 @@ void buttonHookMove(int directionPin, int enablePin, int buttonPin) {
            break; 
         }
     }
+    Serial.println("Hook done extending");
     //Determine how long the hook was running and store that value.
     moveTime = millis() - moveTime;
     //make hook start retracting.
     digitalWrite(directionPin, HIGH);
     analogWrite(enablePin, hookSpeed);    
-
+    Serial.println("hook retracting");
     //delay until it's done retracting.
-    delay(moveTime);
+    
+    //delay(moveTime);
+    delay(2100);
+    
     //stop retracting.
     digitalWrite(enablePin, 0);
 }

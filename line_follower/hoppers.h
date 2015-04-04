@@ -28,8 +28,18 @@ public:
    //robot must be entryAngle degrees clockwise from entryDir to enter the column.
    int entryAngle;
    
+   //The following variables are used to back out of the hopper.
+   //The time you need to go in reverse for. 
+   int backUptime;
+   //Follow this string of directions to end up in exitRow and exitCol.
+   String backUpPath;
+
+   //The row and column you will be at after you finish backing up.
+   byte exitRow;
+   byte exitCol;   
+   
    hopperData(){
-     
+   
    }
 };
 
@@ -40,13 +50,15 @@ void readSwitches(int dipSwitchArray[10], class hopperData &leftHopper, class ho
 //Given a character array arena of an empty board, this function adds hoppers to that array.
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
 //find the hopper nearest to the robot.
-String findNearestHopper(hopperData leftHop, hopperData rightHop, robotPosition botPos);
+String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena [8][7], byte &hopperChosen);
 //prints the game arena.
 void printArena(char arena[8][7]);
 //returns which column to place the ball in.
-int whereToPlace(int ballsPlacedSoFar);
+byte whereToPlace(byte ballsPlacedSoFar);
+//Figure out which grid point to approach the hopper from. 
+void hopperApproachSquare(class hopperData &hop);
 
-int whereToPlace(int ballsPlacedSoFar) {
+byte whereToPlace(byte ballsPlacedSoFar) {
     //given how many balls were placed, return which column to place the next ball in.
     //goes 3, then 4, then 2, then 5, repeat.
     if (ballsPlacedSoFar % 4 == 0) {
@@ -66,7 +78,8 @@ int whereToPlace(int ballsPlacedSoFar) {
 String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena [8][7], byte &hopperChosen) {
     //hoppers = {fixed left, variable left, fixed right, variable right}
     //String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte destCol, char arena[8][7]) {
-    
+    //Find the hopper nearest to the robot, return a path to that hopper, change hopperChosen to be the index in hoppers[] of the chosen hopper
+      
     //stores the index of the nearest non empty hopper.
     byte storedIndex = 0;
     byte dist_to_nearest = 250;
@@ -76,6 +89,8 @@ String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena
     for (byte i = 0; i < 4; i++) {
        if (hoppers[i].numBalls > 0) {
          tempPath = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, hoppers[i].entryRow, hoppers[i].entryCol, arena);
+         tempPath += change_dir(botPos.botDirection, hoppers[i].entryDir);
+         
          if(tempPath.length() < dist_to_nearest) {
             storedIndex = i;
             dist_to_nearest = tempPath.length(); 
@@ -145,6 +160,10 @@ void readSwitches(int dipSwitchArray[10], class hopperData &leftHopper, class ho
     byte ballColour = (dipSwitchArray[6] == ON);
     
     add_hoppers(rightHopper.hopperRow, rightHopper.hopperCol, leftHopper.hopperCol, arena);
+    
+    //Figure out the hopper approach square. 
+    hopperApproachSquare(leftHopper);
+    hopperApproachSquare(rightHopper);
 }
 
 void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
@@ -187,6 +206,31 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
             }
         }
     }    
+}
+
+void approachHopper(hopperData hop, int leftClawButton, int rightClawButton) {
+   //Assuming we are in the hopper approach square, actually approach the hopper. 
+   /*
+   //robot must be entryAngle degrees clockwise from entryDir to enter the column.
+    int entryAngle;
+   
+   //The following variables are used to back out of the hopper.
+   //The time you need to go in reverse for. 
+   int backUptime;
+   //Follow this string of directions to end up in exitRow and exitCol.
+   String backUpPath;
+
+   //The row and column you will be at after you finish backing up.
+   byte exitRow;
+   byte exitCol;   
+   */
+   //turn the correct direction
+   if(hop.entryAngle > 0) {
+      
+   }
+   
+   
+   
 }
 
 void hopperApproachSquare(class hopperData &hop) {

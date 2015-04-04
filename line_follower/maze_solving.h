@@ -7,24 +7,29 @@ String vertical_first(byte startRow, byte startCol, char &dir, byte destRow, byt
 
 //This function finds a path from point A to point B in an empty grid. It is deprecated.
 String empty_solver(byte startRow, byte startCol, char &dir, byte destRow, byte destCol);
-//this function determines shortest path to move from direction A to direction B. 
+//this function determines shortest path to move from direction A to direction B. NOTE: AFTER CALLIN change_dir YOU SHOULD ALWAYS UPDATE THE ROBOTS DIRECTION SO THAT ITS FACING THE RIGHT WAY.
 String change_dir (char startDir, char endDir);
 //This function finds a path from point A to point B and returns a string of directions for the robot to follow that path. 
 //It doesn't actually work and fails for no apparent reason
 String solve(byte startRow, byte startCol, char startDir, byte endRow, byte endCol, char arena[8][7]);
 
+String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
 
-String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte destCol, char arena[8][7]) {
+//deprecated version of blockedSolver
+String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
+
+String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]) {
     //First need to get to a clear intersection.
     //Given an array of clear rows and an array of clear columns.
     //If I'm in a clear row, go to the clear column nearest to mine.
     //If I'm in a clear column, go to the clear row nearest to mine.
+    Serial.println("Blocked solver function caled");
     String clearRows = "";
     String clearCols = "";
     byte currentRow = startRow;
     byte currentCol = startCol;
     
-    bool rowClear, colClear;
+    boolean rowClear, colClear;
     //Deterine which rows are clear.
     for (int row = 0; row < 8; row++)
     {
@@ -86,13 +91,14 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
            }
        }
        //Now that we know what the nearest clear column is, we need to move to it.
-       Serial.print("The nearest clear column is column ");
+       Serial.print("I'm getting out of a corner case. The nearest clear column is column ");
        Serial.println(nearestClearCol);
        path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
        currentCol = nearestClearCol;
     }
     //We are now no longer in a corner case, if we were in one before. Now, we should check if there is an L-shaped or clear path to the goal. 
-    
+    //Serial.println(path);
+
     //This if statement MIGHT be slightly more efficient then just skipping to the else block? Either way, it will work. 
     if ((startRow == destRow) and (clearRows.indexOf(String(startRow)) != -1) or (startCol == destCol and clearCols.indexOf(String(startCol)) != -1)) {
        //If we're in the same clear row as destination or same clear column as destination then we can go straight there, find the path using emptySolver. 
@@ -117,11 +123,10 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
            return path;
         } 
     }
-    
     //If there is no L shaped path, then we need to get to a clear intersection.
-    
+    Serial.println("There is no L shaped path. going to an intersection");
     //First, find the nearest clear intersection.
-   if (clearCols.indexOf(String(startCol)) == -1) {
+    if (clearCols.indexOf(String(startCol)) == -1) {
        Serial.println("I'm not in a clear column");
        //If the robot isn't in a clear column, it must move to a clear column. 
        //First, find the nearest clear column.
@@ -143,8 +148,8 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        //path += "  ";
        currentCol = nearestClearCol;
     } else if(clearRows.indexOf(String(startRow)) == -1) {
-         Serial.println("I'm not in a clear row");
-        //If the robot isn't in a clear row, it must move to a clear row. 
+       Serial.println("I'm not in a clear row");
+       //If the robot isn't in a clear row, it must move to a clear row. 
        //First, find the nearest clear row.
        int nearestClearRow;
        int lowestDist = 8;
@@ -164,6 +169,8 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        //path += "  ";
        currentRow = nearestClearRow;
     }
+    Serial.println(path);
+    Serial.println("We should now be in an intersection.");
     //We now have the path to the nearest clear intersection. From here we can go to the destination.
     //There are 2 ways to go: horizontal first and vertical first. One of them is invalid.
     
@@ -185,7 +192,7 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        return path;
     }
     //The following should happen very rarely, if at all. 
-    
+    Serial.println("There is still no L shaped path");
     //If neither of the above if statements are true, then there is no L shaped path from this clear intersection, so we need to get to a different clear intersection.
     //Any clear intersection in a different corner of the board will work.
     //Arbitrarily choose to do a vertical change. (Move to a different clear intersection in the same column and a different row).
@@ -197,6 +204,8 @@ String blockedSolver(byte startRow, byte startCol, char &dir, byte destRow, byte
        //we are in the last or one of the last rows in clearRows, we need to get to the first row.  
        path += vertical_first(currentRow, currentCol, dir, clearRows[0], currentCol, arena);
     }
+    Serial.print("Having gone to a different corner, the complete path is now ");
+    Serial.println("path");
     //we are now in the other intersection, time to L-shape. 
     horiEndDir = dir; 
     horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
@@ -619,7 +628,8 @@ struct nodeList {
     
 };
 
-String blockedSolverOld(byte startRow, byte startCol, char &dir, byte destRow, byte destCol, char arena[8][7]) {
+String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]) {
+    Serial.println("The old blocked solver function has been called");
     //First need to get to a clear intersection.
     //Given an array of clear rows and an array of clear columns.
     //If I'm in a clear row, go to the clear column nearest to mine.
@@ -629,7 +639,7 @@ String blockedSolverOld(byte startRow, byte startCol, char &dir, byte destRow, b
     byte currentRow = startRow;
     byte currentCol = startCol;
     
-    bool rowClear, colClear;
+    boolean rowClear, colClear;
     //Deterine which rows are clear.
     for (int row = 0; row < 8; row++)
     {
