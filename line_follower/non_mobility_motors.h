@@ -1,7 +1,7 @@
 void raise_lower_arm(int directionPin, int enablePin) {
   //This function lowers the arm and then raises it. 
     byte optimalArmSpeed = 200;  //arm speed between 0 and 255.
-    int delaytime = 1100;         //time for arm to get into position in milliseconds. 
+    int delaytime = 3000;         //time for arm to get into position in milliseconds. 
     
     //get it moving in the right direction. 
     Serial.print("Arm is raising");

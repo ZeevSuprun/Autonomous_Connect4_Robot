@@ -16,9 +16,9 @@ String solve(byte startRow, byte startCol, char startDir, byte endRow, byte endC
 String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
 
 //deprecated version of blockedSolver
-String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
+String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir);
 
-String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]) {
+String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir) {
     //First need to get to a clear intersection.
     //Given an array of clear rows and an array of clear columns.
     //If I'm in a clear row, go to the clear column nearest to mine.
@@ -103,6 +103,7 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
     if ((startRow == destRow) and (clearRows.indexOf(String(startRow)) != -1) or (startCol == destCol and clearCols.indexOf(String(startCol)) != -1)) {
        //If we're in the same clear row as destination or same clear column as destination then we can go straight there, find the path using emptySolver. 
        path = horizontal_first(startRow, startCol, dir, destRow, destCol, arena);
+       endDir = dir;
        return path; 
     } else {
         //check if there's an L shaped path that gets to the end right away. 
@@ -115,11 +116,13 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
            //the horizontal path works.
            path += horiFirst; 
            dir = horiEndDir;
+           endDir = dir;
            return path;
         } else if (vertFirst != "0") {
            //the veritcal path works. 
            path += vertFirst; 
            dir = vertEndDir;
+           endDir = dir;
            return path;
         } 
     }
@@ -184,11 +187,13 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
        //the horizontal path works.
        path += horiFirst; 
        dir = horiEndDir;
+       endDir = dir;
        return path;
     } else if (vertFirst != "0") {
        //the veritcal path works. 
        path += vertFirst; 
        dir = vertEndDir;
+       endDir = dir;
        return path;
     }
     //The following should happen very rarely, if at all. 
@@ -216,11 +221,13 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
        //the horizontal path works.
        path += horiFirst; 
        dir = horiEndDir;
+       endDir = dir;
        return path;
     } else if (vertFirst != "0") {
        //the veritcal path works. 
        path += vertFirst; 
        dir = vertEndDir;
+       endDir = dir;
        return path;
     }
     //Now this should never happen, and if it does we're kind of fucked.
