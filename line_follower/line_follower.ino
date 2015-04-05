@@ -215,9 +215,9 @@ void setup(){
         }
     }
 
-    readSwitches(dipSwitchArray, hoppers[1], hoppers[3], arena);
+    //readSwitches(dipSwitchArray, hoppers[1], hoppers[3], arena);
     //void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
-    //add_hoppers(0, 0, 2, arena);
+    add_hoppers(0, 0, 2, arena);
     
     printArena(arena);
     

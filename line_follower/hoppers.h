@@ -217,31 +217,6 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
     
 }
 
-void approachHopper(hopperData hop, int leftClawButton, int rightClawButton) {
-   //Assuming we are in the hopper approach square, actually approach the hopper. 
-   /*
-   //robot must be entryAngle degrees clockwise from entryDir to enter the column.
-    int entryAngle;
-   
-   //The following variables are used to back out of the hopper.
-   //The time you need to go in reverse for. 
-   int backUptime;
-   //Follow this string of directions to end up in exitRow and exitCol.
-   String backUpPath;
-
-   //The row and column you will be at after you finish backing up.
-   byte exitRow;
-   byte exitCol;   
-   */
-   //turn the correct direction
-   if(hop.entryAngle > 0) {
-      
-   }
-   
-   
-   
-}
-
 void hopperApproachSquare(class hopperData &hop) {
    //Given a non-corner hopper that already has a row, column and orientation, give a value to entryCol and entryRow
    if (hop.hopperCol == 0) {

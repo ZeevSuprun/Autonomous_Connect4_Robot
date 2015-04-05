@@ -200,17 +200,21 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
     Serial.println("There is still no L shaped path");
     //If neither of the above if statements are true, then there is no L shaped path from this clear intersection, so we need to get to a different clear intersection.
     //Any clear intersection in a different corner of the board will work.
-    //Arbitrarily choose to do a vertical change. (Move to a different clear intersection in the same column and a different row).
-    if((clearRows.length() == 2 and clearRows.indexOf(String(currentRow)) != 1) or clearRows.indexOf(String(currentRow)) < clearRows.length() - 2) {
-        //we need to go to clearRows[clearRows.length() - 1]
-        //We are in the first or one of the first rows in clearRows, we need to get to the last row in clearRows. 
-        path += vertical_first(currentRow, currentCol, dir, clearRows[clearRows.length() - 1], currentCol, arena);
-    } else {
-       //we are in the last or one of the last rows in clearRows, we need to get to the first row.  
-       path += vertical_first(currentRow, currentCol, dir, clearRows[0], currentCol, arena);
+    
+    //Arbitrarily choose to do a horizontal change. (Move to a different clear intersection in the same column and a different row).
+    //Since we're doing a horizontal change the new intersection can be in the same row as the old intersection but not in the same column or within 1 column.
+    for (int i = 0; i < clearCols.length(); i++) {
+       if(abs(String(clearCols[i]).toInt() - currentCol) > 2) {
+          //If the new clear column is more than 2 columns away than this one, it is in a different corner.
+          path += horizontal_first(currentRow, currentCol, dir, currentRow, String(clearCols[i]).toInt(), arena);
+          currentCol = String(clearCols[i]).toInt();
+          break;
+       } 
     }
+    
+    
     Serial.print("Having gone to a different corner, the complete path is now ");
-    Serial.println("path");
+    Serial.println(path);
     //we are now in the other intersection, time to L-shape. 
     horiEndDir = dir; 
     horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);
