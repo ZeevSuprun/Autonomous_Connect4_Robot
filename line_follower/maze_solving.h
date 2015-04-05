@@ -13,10 +13,10 @@ String change_dir (char startDir, char endDir);
 //It doesn't actually work and fails for no apparent reason
 String solve(byte startRow, byte startCol, char startDir, byte endRow, byte endCol, char arena[8][7]);
 
-String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
+String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir);
 
 //deprecated version of blockedSolver
-String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir);
+String blockedSolverOld(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7]);
 
 String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir) {
     //First need to get to a clear intersection.
