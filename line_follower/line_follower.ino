@@ -188,7 +188,7 @@ void setup(){
     //Initializing the number of balls each hopper has. (other 3 hoppers set to 0 balls so the robot doesn't try to go there).
     hoppers[0].numBalls = 4;
     hoppers[1].numBalls = 0; //7;
-    hoppers[2].numBalls = 0; //4;
+    hoppers[2].numBalls = 4;
     hoppers[3].numBalls = 0; //7;
     //initializing the entry row and column of each hopper.
     hoppers[0].entryRow = 6;
@@ -241,10 +241,10 @@ void setup(){
     //int colNum = 0;
     //inchForwards(550*colNum + 152);
     
-    int testFunction = -1;
+    int testFunction = 5;
 
     Serial.print("delay starts\n");
-    delay(7000);
+    delay(5000);
     Serial.print("Delay over\n");
     
 
@@ -258,12 +258,13 @@ void setup(){
         void inchBackwards(unsigned long duration);
         void inchBackwardsWithoutLines(boolean toLine, unsigned long duration);
         */
-        //inchForwardsWithoutLines(1000);
+        //inchForwardsWithoutLines(2000);
         //inchForwards(2000);
-        inchBackwardsWithoutLines(false, 1000);
+        //inchBackwardsWithoutLines(false, 2000);
         //delay(500);
         //inchBackwardsWithoutLines(true, 1000);
         //turn(botPos, 3);
+        
         directions = "weww";
         //follow_directions(directions, botPos);
         
@@ -276,12 +277,13 @@ void setup(){
        //raiseArm(armDirectionPin, armEnablePin);
        //ARM: lowering the arm --> HIGH, raising the arm --> LOW
        //HOOK: Extending hook --> LOW retracting hook --> HIGH
-       //testMotor(armDirectionPin, armEnablePin, LOW, 1000);
+       testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
        //delay(2000);
        Serial.println("Aaaaaaarm");
        testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
-       delay(2000);
-       testMotor(armDirectionPin, armEnablePin, LOW, 3000);
+
+       //delay(2000);
+       //testMotor(armDirectionPin, armEnablePin, LOW, 3000);
        //testMotor(hookDirectionPin, hookEnablePin, HIGH);
         gateServo.write(openAngle);
         //wait for long enough for the ball to roll into the connect 4 board.
@@ -289,14 +291,15 @@ void setup(){
         gateServo.write(closedAngle);
       
     } else if (testFunction == -2) {
-      /*********************** -2: buttonHookMove *****************************/
+      /*********************** -2: Misc *****************************/
+      int buttonVal;
       while(true) {
-          leftHopDetect = digitalRead(leftHopperDetectPin);
-          rightHopDetect = digitalRead(rightHopperDetectPin);
-          Serial.print(rightHopDetect);
-          Serial.print(" ");
-          Serial.println(leftHopDetect);
+        buttonVal = digitalRead(hookEndPin);
+        if (buttonVal == 0) {
+           Serial.println("the hook button was pressed");
+        }
       }
+
     } else if (testFunction == -3) {
       /*********************** -3: buttonHookMove *****************************/
         Serial.println("hook is actuating");
@@ -304,12 +307,18 @@ void setup(){
         
     } else if (testFunction == -4) {
         //Do a controlled turn. 
-        unsigned long turnDuration = 945/2;
+        unsigned long turnDuration = 780/2;
+        controlledTurn(turnDuration, 4);
+        /*
+        delay(1000);
+        controlledTurn(turnDuration, 4);
+        delay(1000);
         controlledTurn(turnDuration, 3);
-        //inchForwardsWithoutLines(5000);
-
-        changeHeading(1);
-        delay(6000);
+        delay(1000);
+        controlledTurn(turnDuration, 3);
+        delay(1000);
+        */
+        
         changeHeading(0);
 
     } else if (testFunction == 1) {
@@ -329,7 +338,8 @@ void setup(){
         //Step 1, lower the arm.
         lowerArm(armDirectionPin, armEnablePin);
         //Step 2, extend and then retract the hook to get the ball.
-        buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
+        //buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
+        delay(5000);
         //step 3, raise the arm again.
         raiseArm(armDirectionPin, armEnablePin);
         //ball is now onboard.
@@ -373,15 +383,23 @@ void setup(){
        
     } else if (testFunction == 5) {
       /*********************** 5: Find a hopper (go to a hopper entry point)********************************************/
+        botPos.botRow = 0;
+        botPos.botCol = 4;
+        botPos.botDirection = 'e';
+
         byte nearHop;
         directions = findNearestHopper(hoppers, botPos, arena, nearHop);
         Serial.println(directions);
         Serial.println(nearHop);
-        follow_directions(directions, botPos);
+        //follow_directions(directions, botPos);
 
     } else if (testFunction == 6) {
       /*********************** 6: From a hopper entry point, align to it.  ************************************/
       Serial.println("we're entering a hopper");
+      botPos.botRow = 6;
+      botPos.botCol = 1;
+      botPos.botDirection = 'w';
+    
       enterHopper(hoppers, 0);
 
        //from any location, go to a hopper and align to it. Part marks for just aligning to it.  
@@ -896,7 +914,7 @@ void inchBackwardsWithoutLines(boolean toLine, unsigned long duration) {
 void controlledTurn(unsigned long turnDuration, byte turnwise) {
      //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is)
     //3 --> clockwise, 4 --> counterclockwise.
-    Serial.print("The turn function has been called");
+    Serial.println("The turn function has been called");
     changeHeading(0);
     
     byte storedSpeed = motorSpeed;
@@ -1075,18 +1093,19 @@ int enterHopper(hopperData hoppers[4], byte index) {
       //We are entering the left fixed hopper, assume we're at (6, 1) facing west. 
       
       //First turn 45 degrees counterclockwise to be facing the hopper.
-      controlledTurn(945/2, 4);  //Turn into position. 
-      
+      controlledTurn(314, 4);  //Turn into position. 
+      delay(2000);
       //Next, start going forwards into the hopper.
       changeHeading(1);
       //go forwards until we run into the gameboard. 
-      
+      Serial.println("start moving forwards until I hit the hoppers");
       while(true) {
           //Keep moving forwards until both of the zoidberg claws are clicked
           leftHopDetect = digitalRead(leftHopperDetectPin);
           rightHopDetect = digitalRead(rightHopperDetectPin);
           if (rightHopDetect == 0 and leftHopDetect == 0) {
              break; 
+             
           }
           //Poll for off switch. 
           enable = digitalRead(dipSwitchArray[9]);
@@ -1094,12 +1113,13 @@ int enterHopper(hopperData hoppers[4], byte index) {
              return -1; 
           }
       }
+      Serial.println("I have hit the hoppers");
       changeHeading(0);
   } else if (index == 2) {
       //We are entering the right fixed hopper, assume we're at (6, 5) facing east. 
-      
       //First turn 45 degrees counterclockwise to be facing the hopper.
-      controlledTurn(945/2, 3);  //Turn into position. 
+      controlledTurn(600, 4);  //Turn into position. 
+      
       
       //Next, start going forwards into the hopper.
       changeHeading(1);

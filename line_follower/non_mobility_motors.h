@@ -53,6 +53,7 @@ void lowerArm(int directionPin, int enablePin) {
 
 void testMotor (int directionPin, int enablePin, int dir, int duration) {
     //briefly actuate a motor in the "high" direction to see which direction the HIGH direction actually here. 
+    Serial.println("Motor is being tested.");
     digitalWrite(directionPin, dir);
     analogWrite(enablePin, 255);
     //delay(500);
@@ -85,7 +86,7 @@ void extend_retract_hook(int directionPin, int enablePin) {
 }
 
 void buttonHookMove(int directionPin, int enablePin, int buttonPin) {
-   byte hookSpeed = 255;         //hook speed between 0 and 255.    
+   byte hookSpeed = 200;         //hook speed between 0 and 255.    
     //Make hook start extending. 
     Serial.println("hook extending");
     digitalWrite(directionPin, LOW);

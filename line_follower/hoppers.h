@@ -93,7 +93,7 @@ String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena
     
     //Iterate through the array of hoppers t
     for (byte i = 0; i < 4; i++) {
-       if (hoppers[i].numBalls > 0) {
+       if (hoppers[i].numBalls > 0 and arena[hoppers[i].entryRow][hoppers[i].entryCol] != 'x') {
          tempPath = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, hoppers[i].entryRow, hoppers[i].entryCol, arena, endDir);
          tempPath += change_dir(endDir, hoppers[i].entryDir);
          
@@ -211,7 +211,10 @@ void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]) {
                 arena[r][hop2_col] = 'x';
             }
         }
-    }    
+    }
+    //arena[7][0] = 'x';
+    //arena[7][6] = 'x';
+    
 }
 
 void approachHopper(hopperData hop, int leftClawButton, int rightClawButton) {
