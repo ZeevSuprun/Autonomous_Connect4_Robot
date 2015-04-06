@@ -23,7 +23,7 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
     //Given an array of clear rows and an array of clear columns.
     //If I'm in a clear row, go to the clear column nearest to mine.
     //If I'm in a clear column, go to the clear row nearest to mine.
-    Serial.println("Blocked solver function caled");
+    //Serial.println("Blocked solver function caled");
     String clearRows = "";
     String clearCols = "";
     byte currentRow = startRow;
@@ -91,8 +91,8 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
            }
        }
        //Now that we know what the nearest clear column is, we need to move to it.
-       Serial.print("I'm getting out of a corner case. The nearest clear column is column ");
-       Serial.println(nearestClearCol);
+       //Serial.print("I'm getting out of a corner case. The nearest clear column is column ");
+       //Serial.println(nearestClearCol);
        path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
        currentCol = nearestClearCol;
     }
@@ -127,10 +127,10 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
         } 
     }
     //If there is no L shaped path, then we need to get to a clear intersection.
-    Serial.println("There is no L shaped path. going to an intersection");
+    //Serial.println("There is no L shaped path. going to an intersection");
     //First, find the nearest clear intersection.
     if (clearCols.indexOf(String(startCol)) == -1) {
-       Serial.println("I'm not in a clear column");
+       //Serial.println("I'm not in a clear column");
        //If the robot isn't in a clear column, it must move to a clear column. 
        //First, find the nearest clear column.
        int nearestClearCol=0;
@@ -145,13 +145,13 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
            }
        }
        //Now that we know what the nearest clear column is, we need to move to it.
-       Serial.print("The nearest clear column is column ");
-       Serial.println(nearestClearCol);
+       //Serial.print("The nearest clear column is column ");
+       //Serial.println(nearestClearCol);
        path += horizontal_first(currentRow, currentCol, dir, currentRow, nearestClearCol, arena);
        //path += "  ";
        currentCol = nearestClearCol;
     } else if(clearRows.indexOf(String(startRow)) == -1) {
-       Serial.println("I'm not in a clear row");
+       //Serial.println("I'm not in a clear row");
        //If the robot isn't in a clear row, it must move to a clear row. 
        //First, find the nearest clear row.
        int nearestClearRow;
@@ -165,15 +165,15 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
               nearestClearRow = (String(clearRows[i])).toInt();
            }
        }
-       Serial.print("The nearest clear column is row ");
-       Serial.println(nearestClearRow);
+       //Serial.print("The nearest clear column is row ");
+       //Serial.println(nearestClearRow);
        //Now that we know what the nearest clear row is, we need to move to it.
        path += horizontal_first(currentRow, currentCol, dir, nearestClearRow, currentCol, arena);
        //path += "  ";
        currentRow = nearestClearRow;
     }
-    Serial.println(path);
-    Serial.println("We should now be in an intersection.");
+    //Serial.println(path);
+    //Serial.println("We should now be in an intersection.");
     //We now have the path to the nearest clear intersection. From here we can go to the destination.
     //There are 2 ways to go: horizontal first and vertical first. One of them is invalid.
     
@@ -197,7 +197,7 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
        return path;
     }
     //The following should happen very rarely, if at all. 
-    Serial.println("There is still no L shaped path");
+    //Serial.println("There is still no L shaped path");
     //If neither of the above if statements are true, then there is no L shaped path from this clear intersection, so we need to get to a different clear intersection.
     //Any clear intersection in a different corner of the board will work.
     
@@ -213,8 +213,8 @@ String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte 
     }
     
     
-    Serial.print("Having gone to a different corner, the complete path is now ");
-    Serial.println(path);
+    //Serial.print("Having gone to a different corner, the complete path is now ");
+    //Serial.println(path);
     //we are now in the other intersection, time to L-shape. 
     horiEndDir = dir; 
     horiFirst = horizontal_first(currentRow, currentCol, horiEndDir, destRow, destCol, arena);

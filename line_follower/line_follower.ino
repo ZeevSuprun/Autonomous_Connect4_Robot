@@ -217,13 +217,13 @@ void setup(){
 
     //readSwitches(dipSwitchArray, hoppers[1], hoppers[3], arena);
     //void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
-    add_hoppers(0, 0, 2, arena);
+    add_hoppers(1, 0, 2, arena);
     
     printArena(arena);
     
-    botPos.botRow = 6;
-    botPos.botCol = 6;
-    botPos.botDirection = 'n';
+    botPos.botRow = 7;
+    botPos.botCol = 3;
+    botPos.botDirection = 'w';
     
     //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 3, arena, endDir);
     //directions += change_dir(botPos.botDirection, 'e');
@@ -241,7 +241,10 @@ void setup(){
     //int colNum = 0;
     //inchForwards(550*colNum + 152);
     
-    int testFunction = 5;
+    /*
+    1: Follow directions  2: Pick up a ball.  3: Deposit a ball from (0,2)  4: Approach board and deposit ball.   5: Find + approach the nearest hopper
+    6: Align to hopper    7: exit hopper      8: Dip switch demo            9:Approach + align                    10: Approach + align + exit*/
+    int testFunction = -2;
 
     Serial.print("delay starts\n");
     delay(5000);
@@ -264,9 +267,6 @@ void setup(){
         //delay(500);
         //inchBackwardsWithoutLines(true, 1000);
         //turn(botPos, 3);
-        
-        directions = "weww";
-        //follow_directions(directions, botPos);
         
         //changeHeading(1);
       
@@ -291,14 +291,48 @@ void setup(){
         gateServo.write(closedAngle);
       
     } else if (testFunction == -2) {
-      /*********************** -2: Misc *****************************/
-      int buttonVal;
+      /*********************** -2: Rigourous pathfinding algorithm test.  *****************************/
+      botPos.botRow = 7;
+      botPos.botCol = 3;
+      botPos.botDirection = 'w';
+
       while(true) {
-        buttonVal = digitalRead(hookEndPin);
-        if (buttonVal == 0) {
-           Serial.println("the hook button was pressed");
+        /*********************** #1: Find the nearest non empty hopper. **************************/
+        directions = "";
+        directions = findNearestHopper(hoppers, botPos, arena, hopperChosen);
+        if(directions == "") {
+          break;
         }
-      }
+        Serial.println("Directions from start point to nearest hopper.");
+        Serial.println(directions);
+        //directions now holds the path to the nearest hopper, hopperChosen is the index of hoppers we're going to. 
+        //Go to the nearest non empty hopper, enter hopper, retrieve ball. (No pathfinding, just path following).        
+        hoppers[hopperChosen].numBalls -=1;
+        /*********************** #5: Back out of the hopper. ********************************************/        
+        //exit the hopper and put the robot's new position into botPos.
+        exitHopper(hoppers, hopperChosen, botPos.botRow, botPos.botCol, botPos.botDirection);
+        Serial.print("Now in row ");
+        Serial.print(botPos.botRow);
+        Serial.print( "; column ");
+        Serial.print(botPos.botCol);
+        Serial.print(" and facing in direction ");
+        Serial.println(botPos.botDirection);
+        /***********************#6: Going to the gameboard. ********************************************/
+        
+        //from any location, go to (0,2) and then align to a given column.
+        directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
+        directions += change_dir(endDir, 'e');
+        Serial.println("Directions from Hopper exit space to game board.");
+        Serial.println(directions);
+        botPos.botRow = 0;
+        botPos.botCol = 2;
+        botPos.botDirection = 'e';
+        
+        //Next: Determine where to place ball, align to hopper, deposit the ball. (No pathfinding)        
+        /***********************#9: Go back to a grid point while knowing what that grid point is.*****************************/        
+        //botPos.botCol = 4;
+        Serial.println("Now in Row 0 Column 2 facing e");
+    }
 
     } else if (testFunction == -3) {
       /*********************** -3: buttonHookMove *****************************/
@@ -326,10 +360,11 @@ void setup(){
         
         //We are testing controlled locomotion: going from point A to point B, going around hoppers. 
         //Find the path.
-        directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 3, 6, arena, endDir);
+        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 3, 6, arena, endDir);
+        directions = blockedSolver(0, 2, 'e', 6, 1, arena, endDir);
         Serial.println(directions);
         //Follow the path.
-        follow_directions(directions, botPos);
+        //follow_directions(directions, botPos);
         //BE THE PATH.
     } else if (testFunction == 2) {
         /*********************** 2: Pick a ball (including arm movement) ************************************/
@@ -383,15 +418,15 @@ void setup(){
        
     } else if (testFunction == 5) {
       /*********************** 5: Find a hopper (go to a hopper entry point)********************************************/
-        botPos.botRow = 0;
-        botPos.botCol = 4;
-        botPos.botDirection = 'e';
+        botPos.botRow = 7;
+        botPos.botCol = 3;
+        botPos.botDirection = 'w';
 
         byte nearHop;
         directions = findNearestHopper(hoppers, botPos, arena, nearHop);
         Serial.println(directions);
         Serial.println(nearHop);
-        //follow_directions(directions, botPos);
+        follow_directions(directions, botPos);
 
     } else if (testFunction == 6) {
       /*********************** 6: From a hopper entry point, align to it.  ************************************/
@@ -405,7 +440,7 @@ void setup(){
        //from any location, go to a hopper and align to it. Part marks for just aligning to it.  
     } else if (testFunction == 7) {
       /*********************** 7: exit from a hopper  ************************************/
-      exitHopper(hoppers, hopperChosen, botPos.botRow, botPos.botCol, botPos.botDirection);
+      exitHopper(hoppers, 0, botPos.botRow, botPos.botCol, botPos.botDirection);
  
        
     } else if (testFunction == 8) {
@@ -429,6 +464,43 @@ void setup(){
           
           printArena(arena);
       
+    } else if (testFunction == 9) {
+      /*********************** 9: Aproach + align  ************************************/
+      
+      //approach
+      botPos.botRow = 7;
+      botPos.botCol = 3;
+      botPos.botDirection = 'w';
+
+      byte nearHop;
+      directions = findNearestHopper(hoppers, botPos, arena, nearHop);
+      Serial.println(directions);
+      Serial.println(nearHop);
+      follow_directions(directions, botPos);
+      
+      //Align
+      Serial.println("we're entering a hopper");
+      enterHopper(hoppers, nearHop);
+       
+    } else if (testFunction == 10) {
+      /*********************** 10: Approach + align + exit.  ************************************/
+      //approach
+      botPos.botRow = 7;
+      botPos.botCol = 3;
+      botPos.botDirection = 'w';
+
+      byte nearHop;
+      directions = findNearestHopper(hoppers, botPos, arena, nearHop);
+      Serial.println(directions);
+      Serial.println(nearHop);
+      follow_directions(directions, botPos);
+      
+      //Align
+      Serial.println("we're entering a hopper");
+      enterHopper(hoppers, nearHop);
+
+      exitHopper(hoppers, nearHop, botPos.botRow, botPos.botCol, botPos.botDirection); 
+       
     }
 
     ballCount = 0;
@@ -547,13 +619,12 @@ void loop() {
         /***********************#6: Going to the gameboard. ********************************************/
         //from any location, go to (0,2) and then align to a given column.
         directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
-        directions += change_dir(botPos.botDirection, 'e');
+        directions += change_dir(endDir, 'e');
         Serial.println(directions);
         follow_directions(directions, botPos);
         //should now be at correct grid squre, now to inch forwards.
         
         /***********************# 7, Determine where to deposit the ball.  *****************************/
-        colNum = whereToPlace(ballCount);
         
         /***********************# 8.part 1 Align to the right column.  *****************************/
         //Poll for off switch. 
@@ -1119,7 +1190,6 @@ int enterHopper(hopperData hoppers[4], byte index) {
       //We are entering the right fixed hopper, assume we're at (6, 5) facing east. 
       //First turn 45 degrees counterclockwise to be facing the hopper.
       controlledTurn(600, 4);  //Turn into position. 
-      
       
       //Next, start going forwards into the hopper.
       changeHeading(1);
