@@ -20,7 +20,7 @@ int readQD(int pin){
     diff = micros() - time;
   }
   //return diff;
-  if (diff >= 110) {
+  if (diff >= 200) {
       return HIGH;
   } else {
       return LOW;
@@ -32,16 +32,18 @@ int readQD(int pin){
 int readAnalogQRE(int pin) {
   int QRE_Value = analogRead(pin);
   
+  
   return QRE_Value;
+  //return map(QRE_Value, 0, 1025, 0, 10000);
 }
 
 int binary_readAnalog(int pin) {
   int QRE_Value = analogRead(pin);
-  int threshold = 110;
+  int threshold = 200;
   
   if (QRE_Value >= threshold){
        return HIGH;
   } else {
-    return LOW;
+       return LOW;
   }
 }

@@ -36,7 +36,7 @@ void follow_directions(String  directions, class robotPosition &botPos);
 void exitHopper(hopperData hoppers[4], byte index, byte &exitRow, byte &exitCol, char &exitDir);
 //this function makes the robot enter a hopper and returns 0 if successful or -1 if the robot was paused while the function was running.
 int enterHopper(hopperData hoppers[4], byte index);
-
+int callibratedTurn(byte turnwise);
 
 //void gotLost();
 
@@ -48,7 +48,7 @@ int enterHopper(hopperData hoppers[4], byte index);
 *******************************************************************/
 /***********************line following sensors*********************/
 //element 0: reading leftmost QRE pin, 1: left QRE pin, 2: centre QRE pin, 3: right QRE pin, 4: rightmost QRE pin, 5: back QRE pin.
-const int QRE_pin_array[] = {A6, A7, A5, A2, A4, A1};
+const int QRE_pin_array[] = {A3, A2, A4, A0, A5, A1};
 
 //Stores the values detected by the line sensors.
 //0: reading from leftmost QRE, 1: reading from left QRE, 2: centre QRE, 3: right QRE, 4: rightmost QRE. 5: front QRE pin 
@@ -186,7 +186,7 @@ void setup(){
     analogWrite(armEnablePin, 0);
     
     //Initializing the number of balls each hopper has. (other 3 hoppers set to 0 balls so the robot doesn't try to go there).
-    hoppers[0].numBalls = 4;
+    hoppers[0].numBalls = 0;//4;
     hoppers[1].numBalls = 0; //7;
     hoppers[2].numBalls = 4;
     hoppers[3].numBalls = 0; //7;
@@ -217,7 +217,7 @@ void setup(){
 
     //readSwitches(dipSwitchArray, hoppers[1], hoppers[3], arena);
     //void add_hoppers(int hop1_row, int hop1_col, int hop2_col, char arena[8][7]);
-    add_hoppers(1, 0, 2, arena);
+    //add_hoppers(1, 0, 2, arena);
     
     printArena(arena);
     
@@ -234,7 +234,7 @@ void setup(){
     
     //distance to get to column X, in cm, from (0,3): DISTANCE=4.553571429*column+5.867857143. Time to move distance: time = 120.71*(Distance)+25.706
     //**************************************************************************************************************
-    //              time to get to column X from (0, 3) is = 549.7*ColumnNumber+1699.96
+    //              time to get to column X from (0, 3) is = 232.8*x+608
     //**************************************************************************************************************
     //To get to column X need to move forwards from (0, 3) 
     //inchForwardsWithoutLines(616);
@@ -244,7 +244,7 @@ void setup(){
     /*
     1: Follow directions  2: Pick up a ball.  3: Deposit a ball from (0,2)  4: Approach board and deposit ball.   5: Find + approach the nearest hopper
     6: Align to hopper    7: exit hopper      8: Dip switch demo            9:Approach + align                    10: Approach + align + exit*/
-    int testFunction = -2;
+    int testFunction = 9;
 
     Serial.print("delay starts\n");
     delay(5000);
@@ -266,7 +266,27 @@ void setup(){
         //inchBackwardsWithoutLines(false, 2000);
         //delay(500);
         //inchBackwardsWithoutLines(true, 1000);
-        //turn(botPos, 3);
+        /*
+        changeHeading(1);
+        delay(5000);
+        */
+        
+        turn(botPos, 3);
+        delay(2000);
+        turn(botPos, 4);
+        
+        
+        /*
+        //#2
+        goForwards(botPos);
+        delay(2000);
+        goForwards(botPos);
+        delay(2000);
+        goForwards(botPos);
+        */
+
+        //int turnTime = callibratedTurn(4);
+        //Serial.println(turnTime);
         
         //changeHeading(1);
       
@@ -277,19 +297,28 @@ void setup(){
        //raiseArm(armDirectionPin, armEnablePin);
        //ARM: lowering the arm --> HIGH, raising the arm --> LOW
        //HOOK: Extending hook --> LOW retracting hook --> HIGH
+       
+       /*
        testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
        //delay(2000);
        Serial.println("Aaaaaaarm");
        testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
-
-       //delay(2000);
-       //testMotor(armDirectionPin, armEnablePin, LOW, 3000);
-       //testMotor(hookDirectionPin, hookEnablePin, HIGH);
-        gateServo.write(openAngle);
-        //wait for long enough for the ball to roll into the connect 4 board.
-        delay(200);
-        gateServo.write(closedAngle);
-      
+       */
+        
+        botPos.botRow = 4;
+        botPos.botCol = 3;
+        botPos.botDirection = 'n';       
+        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 3, 1, arena, endDir);
+        //directions += change_dir(endDir, 'w');
+        directions = "wwe";
+        Serial.println(directions); 
+        while(true) {
+          follow_directions(directions, botPos);
+        }
+        delay(2000);
+        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
+        //follow_directions(directions, botPos);       
+        
     } else if (testFunction == -2) {
       /*********************** -2: Rigourous pathfinding algorithm test.  *****************************/
       botPos.botRow = 7;
@@ -340,21 +369,16 @@ void setup(){
         buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
         
     } else if (testFunction == -4) {
-        //Do a controlled turn. 
-        unsigned long turnDuration = 780/2;
-        controlledTurn(turnDuration, 4);
-        /*
-        delay(1000);
-        controlledTurn(turnDuration, 4);
-        delay(1000);
-        controlledTurn(turnDuration, 3);
-        delay(1000);
-        controlledTurn(turnDuration, 3);
-        delay(1000);
-        */
-        
-        changeHeading(0);
-
+      while(true) {
+          for (byte i = 0; i < 6; i++) {
+              QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
+              //To test what values the sensor array is reading. 
+              Serial.print(QRE_val_array[i]);
+              Serial.print(" ");
+          }
+          Serial.print("\n");
+          delay(30);
+      }
     } else if (testFunction == 1) {
         /*********************** 1: Follow Directions *****************************/
         
@@ -373,7 +397,7 @@ void setup(){
         //Step 1, lower the arm.
         lowerArm(armDirectionPin, armEnablePin);
         //Step 2, extend and then retract the hook to get the ball.
-        //buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
+        buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
         delay(5000);
         //step 3, raise the arm again.
         raiseArm(armDirectionPin, armEnablePin);
@@ -435,12 +459,19 @@ void setup(){
       botPos.botCol = 1;
       botPos.botDirection = 'w';
     
-      enterHopper(hoppers, 0);
+      enterHopper(hoppers, 2);
 
        //from any location, go to a hopper and align to it. Part marks for just aligning to it.  
     } else if (testFunction == 7) {
       /*********************** 7: exit from a hopper  ************************************/
+      botPos.botRow = 7;
+      botPos.botCol = 3;
+      botPos.botDirection = 'w';
       exitHopper(hoppers, 0, botPos.botRow, botPos.botCol, botPos.botDirection);
+      //follow_directions("weww", botPos);
+      Serial.println(botPos.botRow);
+      Serial.println(botPos.botCol);
+      Serial.println(botPos.botDirection);
  
        
     } else if (testFunction == 8) {
@@ -470,17 +501,20 @@ void setup(){
       //approach
       botPos.botRow = 7;
       botPos.botCol = 3;
-      botPos.botDirection = 'w';
+      botPos.botDirection = 'e';
 
       byte nearHop;
       directions = findNearestHopper(hoppers, botPos, arena, nearHop);
+      //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena, endDir);
+      //directions = "wwqwe";
+      //change_dir(endDir, 'w');
       Serial.println(directions);
       Serial.println(nearHop);
       follow_directions(directions, botPos);
       
       //Align
       Serial.println("we're entering a hopper");
-      enterHopper(hoppers, nearHop);
+      enterHopper(hoppers, 2);
        
     } else if (testFunction == 10) {
       /*********************** 10: Approach + align + exit.  ************************************/
@@ -509,8 +543,6 @@ void setup(){
 
 
 void loop() {
-    //inchForwards(5000);
-    //goForwards(botPos);
     changeHeading(0);
     
     /*
@@ -520,16 +552,6 @@ void loop() {
     //Serial.print(leftHopDetect);
     //Serial.print(" ");
     Serial.println(rightHopDetect);
-    delay(15);
-    */
-    /*
-    for (byte i = 0; i < 6; i++) {
-      QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
-      //To test what values the sensor array is reading. 
-      Serial.print(QRE_val_array[i]);
-      Serial.print(" ");
-    }
-    Serial.print("\n");
     delay(15);
     */
     
@@ -569,9 +591,11 @@ void loop() {
     } 
     while(enable == 0) {
         //If the enable is equal to 0, the switch is on and we are moving as normal.
-        
+        enable = digitalRead(dipSwitchArray[9]);
+        if (enable == 1) {
+           break; 
+        }
         /*********************** #1: Find the nearest non empty hopper. **************************/
-        directions = "";
         directions = findNearestHopper(hoppers, botPos, arena, hopperChosen);
         //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena, endDir);
 
@@ -595,13 +619,13 @@ void loop() {
         enable = digitalRead(dipSwitchArray[9]);
         if (enable == 1) {
            break; 
-        }        
+        }
         
         /*********************** #4: retrieve the ball. ********************************************/
         //Step 1, lower the arm.;
         lowerArm(armDirectionPin, armEnablePin);
         //Step 2, extend and then retract the hook to get the ball.
-        //buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
+        buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
         //step 3, raise the arm again.
         raiseArm(armDirectionPin, armEnablePin);
         //ball is now onboard.
@@ -625,6 +649,7 @@ void loop() {
         //should now be at correct grid squre, now to inch forwards.
         
         /***********************# 7, Determine where to deposit the ball.  *****************************/
+        colNum = whereToPlace(ballCount);
         
         /***********************# 8.part 1 Align to the right column.  *****************************/
         //Poll for off switch. 
@@ -634,7 +659,7 @@ void loop() {
         }
         
         Serial.println("Starting to inch forwards");
-        inchForwards(550*colNum + 1700);            //This line is suspect, we need to check it again to make sure we can reliably go to the right column. (or one beside it)
+        inchForwards(233*colNum + 618);            //This line is suspect, we need to check it again to make sure we can reliably go to the right column. (or one beside it)
         changeHeading(0);
         Serial.println("Done inching forwards");
         
@@ -653,11 +678,11 @@ void loop() {
         if (enable == 1) {
            break; 
         }
-        
+        //Move forwards to get back on grid. 
         goForwards(botPos);
         changeHeading(0);
         botPos.botCol = 4;
-        
+
     }    
 }
 
@@ -1012,9 +1037,8 @@ void turn(class robotPosition &botPos, byte turnwise)  {
     changeHeading(0);
     //Delay long enough so that it doesn't immediately stop turning. 
     changeHeading(turnwise);
-    delay(1000);
-    
-    
+    delay(750);
+    Serial.println("The delay is over");
     //unsigned long turnDuration;
     //unsigned long startTime = millis();
     while(true) {
@@ -1028,8 +1052,8 @@ void turn(class robotPosition &botPos, byte turnwise)  {
         Serial.print(" ");
       }
       Serial.print("\n");
-      //if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
-        if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {
+      if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
+      //if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {}
           changeHeading(0);
           Serial.println("WE ARE DONE TURNING, PUNY HUMAN");
           break;
@@ -1069,6 +1093,46 @@ void turn(class robotPosition &botPos, byte turnwise)  {
         }
     }    
 }
+
+int callibratedTurn(byte turnwise)  {
+
+    //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is) and record how much time it takes.
+    //3 --> clockwise, 4 --> counterclockwise.
+    changeHeading(0);
+    //Delay long enough so that it doesn't immediately stop turning. 
+    changeHeading(turnwise);
+
+    unsigned long startTime = millis();
+    delay(500);
+    Serial.println("startedTurn");
+    while(true) {
+      //Keep turning until we're on a line. 
+      
+      //Read from sensors.
+      for (byte i = 0; i < 6; i++) {
+        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
+        //To test what values the sensor array is reading. 
+        Serial.print(QRE_val_array[i]);
+        Serial.print(" ");
+      }
+      Serial.print("\n");
+      if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
+      //if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {}
+          changeHeading(0);
+          Serial.println("WE ARE DONE TURNING, PUNY HUMAN");
+          break;
+      }
+    
+    }
+    unsigned long endTime = millis() - startTime;
+    changeHeading(0);
+    Serial.println(endTime);
+    return endTime;
+    
+    //to smartTurn X degrees, do a controlledTurn for endTurn /90 * X seconds.
+}
+
+
 
 void turnAdjust(byte turnwise)  {
     //Controls the robot's wheels to make it turn until it finds the line again.
@@ -1164,8 +1228,10 @@ int enterHopper(hopperData hoppers[4], byte index) {
       //We are entering the left fixed hopper, assume we're at (6, 1) facing west. 
       
       //First turn 45 degrees counterclockwise to be facing the hopper.
-      controlledTurn(314, 4);  //Turn into position. 
-      delay(2000);
+      //int turnTime = callibratedTurn(4);
+      //controlledTurn(turnTime/2, 4);  //Turn into position. 
+      controlledTurn(500, 4);  //Turn into position. 
+      //delay(2000);
       //Next, start going forwards into the hopper.
       changeHeading(1);
       //go forwards until we run into the gameboard. 
@@ -1189,7 +1255,7 @@ int enterHopper(hopperData hoppers[4], byte index) {
   } else if (index == 2) {
       //We are entering the right fixed hopper, assume we're at (6, 5) facing east. 
       //First turn 45 degrees counterclockwise to be facing the hopper.
-      controlledTurn(600, 4);  //Turn into position. 
+      controlledTurn(500, 3);  //Turn into position. 
       
       //Next, start going forwards into the hopper.
       changeHeading(1);
@@ -1209,9 +1275,7 @@ int enterHopper(hopperData hoppers[4], byte index) {
           }
       }
       changeHeading(0);
-    
   }
-  
   return 0;
 }
 

@@ -61,17 +61,10 @@ void hopperApproachSquare(class hopperData &hop);
 byte whereToPlace(byte ballsPlacedSoFar) {
     //given how many balls were placed, return which column to place the next ball in.
     //goes 3, then 4, then 2, then 5, repeat.
-    if (ballsPlacedSoFar % 4 == 0) {
-        return 3; 
-    } else if (ballsPlacedSoFar % 4 == 1) {
-        return 4;
-    } else if (ballsPlacedSoFar % 4 == 2) {
-        return 2;
-    } else if (ballsPlacedSoFar % 4 == 3) {
-        return 5;
+    if (ballsPlacedSoFar < 5 == 0) {
+       return 4; 
     } else {
-        //this should never happen
-        return 0;  
+       return  5;
     }
 }
 
