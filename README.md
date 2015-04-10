@@ -8,3 +8,5 @@ line_followerOld contains a script that combines grid sensing and differential s
 The purpose of the above code was to test new features before adding them to the main program, which is in the line_follower folder.
 
 the line_follower folder contains everything responsible for controlling the actual autonomous connect 4 robot.
+
+the line_follower_tournament folder contains the version of the code that was used for the final competition. 
