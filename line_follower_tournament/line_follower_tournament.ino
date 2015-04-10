@@ -18,15 +18,11 @@ void changeHeading(byte heading);
 void goForwards(class robotPosition &botPos);
 //These four functions make the robot move forwards / backwards with / without line following
 void inchForwards(unsigned long duration);
-void inchForwardsWithoutLines(unsigned long duration);
-void inchBackwards(unsigned long duration);
 void inchBackwardsWithoutLines(boolean toLine, unsigned long duration);
 //Make the robot turn 90 degrees either clockwise or counterclockwise. 
 void turn(class robotPosition &botPos, byte turnwise);
 //Make a hard turn to get back on track when lost. 
 void turnAdjust(byte turnwise);
-//This function turns for a certain duration.
-void controlledTurn(unsigned long turnDuration, byte turnwise);
 //this function makes the robot follow the path found by the empty_solver function.
 void follow_directions(String  directions, class robotPosition &botPos);
 //turn with a shorter duration.
@@ -39,7 +35,6 @@ void shortTurn(class robotPosition &botPos, byte turnwise);
 void exitHopper(hopperData hoppers[4], byte index, byte &exitRow, byte &exitCol, char &exitDir);
 //this function makes the robot enter a hopper and returns 0 if successful or -1 if the robot was paused while the function was running.
 int enterHopper(hopperData hoppers[4], byte index);
-int callibratedTurn(byte turnwise);
 
 //void gotLost();
 
@@ -172,12 +167,6 @@ void setup(){
     gateServo.attach(servoPin);
     //gate starts closed.
     gateServo.write(closedAngle);
-    //Interrupt pin.
-    /*    
-    pinMode(gotLostPin, INPUT);
-    digitalWrite(gotLostPin, HIGH);
-    attachInterrupt(0, gotLost, FALLING);
-    */  
 /******************************************************************
 *******************************************************************
                Done Setting Pin Modes
@@ -191,7 +180,7 @@ void setup(){
     //Initializing the number of balls each hopper has. (other 3 hoppers set to 0 balls so the robot doesn't try to go there).
     hoppers[0].numBalls = 4;
     hoppers[1].numBalls = 0; //7;
-    hoppers[2].numBalls = 4;
+    hoppers[2].numBalls = 0; //4;
     hoppers[3].numBalls = 0; //7;
     //initializing the entry row and column of each hopper.
     hoppers[0].entryRow = 6;
@@ -234,11 +223,7 @@ void setup(){
     botPos.botRow = 7;
     botPos.botCol = 3;
     botPos.botDirection = 'w';
-    
-    //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 3, arena, endDir);
-    //directions += change_dir(botPos.botDirection, 'e');
-    Serial.println(directions);
-        
+            
     //To start on the red line use row = 7, col = 3, dir = 'n', to same row, 5.
     
     
@@ -247,307 +232,16 @@ void setup(){
     //              time to get to column X from (0, 3) is = 232.8*x+608
     //**************************************************************************************************************
     //To get to column X need to move forwards from (0, 3) 
-    //inchForwardsWithoutLines(616);
-    //int colNum = 0;
-    //inchForwards(550*colNum + 152);
     
-    /*
-    1: Follow directions  2: Pick up a ball.  3: Deposit a ball from (0,2)  4: Approach board and deposit ball.   5: Find + approach the nearest hopper
-    6: Align to hopper    7: exit hopper      8: Dip switch demo            9:Approach + align                    10: Approach + align + exit*/
-    int testFunction = 7;
-
     Serial.print("delay starts\n");
     delay(5000);
     Serial.print("Delay over\n");
-
-    //change the variable testFunction to choose which huge block of code to test.
-    if (testFunction == -1) {
-        /*********************** -1: inching *****************************/
-      
-        /*
-        void inchForwards(unsigned long duration);
-        void inchForwardsWithoutLines(unsigned long duration);
-        void inchBackwards(unsigned long duration);
-        void inchBackwardsWithoutLines(boolean toLine, unsigned long duration);
-        */
-/*
-        int colNum = 4;
-        inchForwards(233*colNum + 618);
-        gateServo.write(openAngle);
-        //wait for long enough for the ball to roll into the connect 4 board.
-        delay(1000);
-        gateServo.write(closedAngle);
-*/
-  while(true) {
-        for (byte i = 0; i < 10; i++) {
-          Serial.print(digitalRead(dipSwitchArray[i]));
-        }
-        Serial.println("");
-  }
-
-        /*
-        changeHeading(1);
-        delay(5000);
-        */
-        
-        //int turnTime = callibratedTurn(4);
-        //Serial.println(turnTime);
-        
-        //changeHeading(1);
-      
-    }else if (testFunction == -5) {
-       /*********************** -5: testMotor *****************************/
-      
-       //do nothing
-       //raiseArm(armDirectionPin, armEnablePin);
-       //ARM: lowering the arm --> HIGH, raising the arm --> LOW
-       //HOOK: Extending hook --> LOW retracting hook --> HIGH
-       
-       /*
-       testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
-       //delay(2000);
-       Serial.println("Aaaaaaarm");
-       testMotor(armDirectionPin, armEnablePin, HIGH, 3000);
-       */
-        
-        botPos.botRow = 4;
-        botPos.botCol = 3;
-        botPos.botDirection = 'n';       
-        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 3, 1, arena, endDir);
-        //directions += change_dir(endDir, 'w');
-        directions = "wwe";
-        Serial.println(directions); 
-        while(true) {
-          follow_directions(directions, botPos);
-        }
-        delay(2000);
-        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
-        //follow_directions(directions, botPos);        
-
-    } else if (testFunction == -3) {
-      /*********************** -3: buttonHookMove *****************************/
-        Serial.println("hook is actuating");
-        buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
-        
-    } else if (testFunction == -4) {
-      while(true) {
-          for (byte i = 0; i < 6; i++) {
-              QRE_val_array[i] =  readAnalogQRE(QRE_pin_array[i]);
-              //To test what values the sensor array is reading. 
-              Serial.print(QRE_val_array[i]);
-              Serial.print(" ");
-          }
-          Serial.print("\n");
-          delay(30);
-      }
-    } else if (testFunction == 1) {
-        /*********************** 1: Follow Directions *****************************/
-        
-        //We are testing controlled locomotion: going from point A to point B, going around hoppers. 
-        //Find the path.
-        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 3, 6, arena, endDir);
-        directions = blockedSolver(0, 2, 'e', 6, 1, arena, endDir);
-        Serial.println(directions);
-        //Follow the path.
-        //follow_directions(directions, botPos);
-        //BE THE PATH.
-    } else if (testFunction == 2) {
-        /*********************** 2: Pick a ball (including arm movement) ************************************/
-        
-        //We are testing picking upa a game ball with the robot aligned to a hopper.
-        //Step 1, lower the arm.
-        /*
-        lowerArm(armDirectionPin, armEnablePin);
-        //Step 2, extend and then retract the hook to get the ball.
-        buttonHookMove(hookDirectionPin, hookEnablePin, hookEndPin);
-        delay(2000);
-        //step 3, raise the arm again.
-        raiseArm(armDirectionPin, armEnablePin);
-        //ball is now onboard.
-        */
-        gateServo.write(openAngle);
-        //wait for long enough for the ball to roll into the connect 4 board.
-        delay(1000);
-        gateServo.write(closedAngle);
-
-    } else if (testFunction == 3) {
-      /*********************** 3: Deposit a game ball from (0,2) ************************************/
-      
-        //With the robot at (0, 2), deposit the ball in a given column.
-        byte colNum = 2;
-        Serial.println("Starting to inch forwards");
-        inchForwards(550*colNum + 1700);
-        //inchForwardsWithoutLines(550*colNum + 1700);
-        Serial.println("Done inching forwards");
-        //Open the servo gate
-        gateServo.write(openAngle);
-        //wait for long enough for the ball to roll into the connect 4 board.
-        delay(1000);
-        gateServo.write(closedAngle);
-        //inch backwards with line following
-    } else if (testFunction == 4) {
-        /*********************** 4: From any location, deposit a game ball. ************************************/
-        botPos.botRow = 6;
-        botPos.botCol = 0;
-        botPos.botDirection = 'n';       
-
-        directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
-        directions += change_dir(endDir, 'e');
-        Serial.println(directions);
-        follow_directions(directions, botPos);
-        //should now be at correct grid squre, now to inch forwards.
-        
-        /***********************# 7, Determine where to deposit the ball.  *****************************/
-        colNum = whereToPlace(ballCount);
-        
-        /***********************# 8.part 1 Align to the right column.  *****************************/
-        //Poll for off switch. 
-        
-        Serial.println("Starting to inch forwards");
-        inchForwards(233*colNum + 618);            //This line is suspect, we need to check it again to make sure we can reliably go to the right column. (or one beside it)
-        changeHeading(0);
-        Serial.println("Done inching forwards");
-        
-        /***********************# 8.part 2 Depositing the ball  *****************************/
-        //Open the servo gate
-        gateServo.write(openAngle);
-        //wait for long enough for the ball to roll into the connect 4 board.
-        delay(1000);
-        gateServo.write(closedAngle);
-        //increment ballcount. 
-        ballCount += 1;
-    
-        /***********************#9: Go back to a grid point while knowing what that grid point is.*****************************/
-        //Poll for off switch. 
-
-        //Move forwards to get back on grid. 
-        goForwards(botPos);
-        changeHeading(0);
-        botPos.botCol = 4;
-       
-    } else if (testFunction == 5) {
-      /*********************** 5: Find a hopper (go to a hopper entry point)********************************************/
-        botPos.botRow = 7;
-        botPos.botCol = 3;
-        botPos.botDirection = 'w';
-
-        byte nearHop;
-        directions = findNearestHopper(hoppers, botPos, arena, nearHop);
-        Serial.println(directions);
-        Serial.println(nearHop);
-        follow_directions(directions, botPos);
-
-    } else if (testFunction == 6) {
-      /*********************** 6: From a hopper entry point, align to it.  ************************************/
-      Serial.println("we're entering a hopper");
-      botPos.botRow = 6;
-      botPos.botCol = 1;
-      botPos.botDirection = 'w';
-    
-      enterHopper(hoppers, 0);
-      
-      exitHopper(hoppers, 0, botPos.botRow, botPos.botCol, botPos.botDirection);
-      //go to the gameboard.
-      directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 0, 2, arena, endDir);
-      follow_directions(directions, botPos);
-
-       //from any location, go to a hopper and align to it. Part marks for just aligning to it.  
-    } else if (testFunction == 7) {
-      /*********************** 7: exit from a hopper  ************************************/
-      botPos.botRow = 7;
-      botPos.botCol = 3;
-      botPos.botDirection = 'w';
-      exitHopper(hoppers, 0, botPos.botRow, botPos.botCol, botPos.botDirection);
-      //follow_directions("weww", botPos);
-      Serial.println(botPos.botRow);
-      Serial.println(botPos.botCol);
-      Serial.println(botPos.botDirection);
-      follow_directions("weww", botPos);
-      Serial.println("following directions");
-      Serial.println(botPos.botRow);
-      Serial.println(botPos.botCol);
-      Serial.println(botPos.botDirection);
-      
-       
-    } else if (testFunction == 8) {
-     /*********************** 8: demonstrate that we can use the dip switches to tell the robot where the hoppers are.  ************************************/
-
-       while (true) {
-           readSwitches(dipSwitchArray, hoppers[1], hoppers[3], arena);
-        }    //print ALL the things.
-         
-          Serial.print(hoppers[1].hopperRow);
-          Serial.print(" ");
-          Serial.print(hoppers[1].hopperCol);
-          Serial.print(" ");
-          Serial.print(hoppers[1].orientation);
-          Serial.print("\n");
-          Serial.print(hoppers[3].hopperRow);
-          Serial.print(" ");
-          Serial.print(hoppers[3].hopperCol);
-          Serial.print(" ");
-          Serial.println(hoppers[3].orientation);
-          
-          printArena(arena);
-      
-    } else if (testFunction == 9) {
-      /*********************** 9: Aproach + align  ************************************/
-      
-      //approach
-      botPos.botRow = 7;
-      botPos.botCol = 3;
-      botPos.botDirection = 'w';
-
-      byte nearHop;
-      directions = findNearestHopper(hoppers, botPos, arena, nearHop);
-      //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena, endDir);
-      //directions = "wwqwe";
-      //change_dir(endDir, 'w');
-      Serial.println(directions);
-      Serial.println(nearHop);
-      follow_directions(directions, botPos);
-      
-      //Align
-      Serial.println("we're entering a hopper");
-      enterHopper(hoppers, nearHop);
-       
-    } else if (testFunction == 10) {
-      /*********************** 10: Approach + align + exit.  ************************************/
-      //approach
-      botPos.botRow = 7;
-      botPos.botCol = 3;
-      botPos.botDirection = 'w';
-
-      byte nearHop;
-      directions = findNearestHopper(hoppers, botPos, arena, nearHop);
-      Serial.println(directions);
-      Serial.println(nearHop);
-      follow_directions(directions, botPos);
-      
-      //Align
-      Serial.println("we're entering a hopper");
-      enterHopper(hoppers, nearHop);
-
-      exitHopper(hoppers, nearHop, botPos.botRow, botPos.botCol, botPos.botDirection); 
-       
-    }
 
     ballCount = 0;
     Serial.println("movement complete, you're in the loop now");
 }
 
-void loop() {
-    changeHeading(0);
-    
-    /*
-    //leftHopDetect = digitalRead(leftHopperDetectPin);
-    rightHopDetect = digitalRead(hookEndPin);
-    //rightHopDetect = digitalRead(rightHopperDetectPin);
-    //Serial.print(leftHopDetect);
-    //Serial.print(" ");
-    Serial.println(rightHopDetect);
-    delay(15);
-    */
+void loop() {    
     
     /*
     Main gameplay function:
@@ -562,8 +256,8 @@ void loop() {
     9. Go back to a grid point and know where that grid point is.
     10. Go back to step 1. 
     */
-    enable = digitalRead(dipSwitchArray[9]);
-    enable = -1;
+    //enable = digitalRead(dipSwitchArray[9]);
+    enable = 0;
     if (enable == 1) {
         //if enable is 1, the switch is off, and we are on pause and not moving.
         changeHeading(0);
@@ -581,7 +275,6 @@ void loop() {
     } else if(enable == 0) {
         //The enable switch was just flipped to unpause, delay a few seconds to give us a chance to get out of the robot's way.
         //I could accomplish the same thing with an interrupt on rising edge maybe? This way should work too.
-        delay(5000);
     } 
     while(enable == 0) {
         //If the enable is equal to 0, the switch is on and we are moving as normal.
@@ -590,8 +283,10 @@ void loop() {
            break; 
         }
         /*********************** #1: Find the nearest non empty hopper. **************************/
-        directions = findNearestHopper(hoppers, botPos, arena, hopperChosen);
-        //directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena, endDir);
+        //directions = findNearestHopper(hoppers, botPos, arena, hopperChosen);
+        hopperChosen = 0;
+        directions = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, 6, 1, arena, endDir);
+        directions += change_dir(endDir, 'w');
 
         Serial.println(directions);
         //directions now holds the path to the nearest hopper, hopperChosen is the index of hoppers we're going to. 
@@ -628,7 +323,7 @@ void loop() {
         
         //exit the hopper and put the robot's new position into botPos.
         exitHopper(hoppers, hopperChosen, botPos.botRow, botPos.botCol, botPos.botDirection);
-        //Poll for off switch. 
+        //Poll for enable switch. 
         enable = digitalRead(dipSwitchArray[9]);
         if (enable == 1) {
            break; 
@@ -643,8 +338,8 @@ void loop() {
         //should now be at correct grid squre, now to inch forwards.
         
         /***********************# 7, Determine where to deposit the ball.  *****************************/
-        colNum = whereToPlace(ballCount);
-        
+        //colNum = whereToPlace(ballCount);
+        colNum = 4;
         /***********************# 8.part 1 Align to the right column.  *****************************/
         //Poll for off switch. 
         enable = digitalRead(dipSwitchArray[9]);
@@ -661,7 +356,7 @@ void loop() {
         //Open the servo gate
         gateServo.write(openAngle);
         //wait for long enough for the ball to roll into the connect 4 board.
-        delay(500);
+        delay(1000);
         gateServo.write(closedAngle);
         //increment ballcount. 
         ballCount += 1;
@@ -879,87 +574,6 @@ void inchForwards(unsigned long duration) {
   motorSpeed = storedSpeed;
 }
 
-void inchBackwards(unsigned long duration) {
-  //This function makes the robot move backwards for duration milliseconds while following a line. 
-  
-  //store the motorSpeed so that we can change it back to normal afterwards.
-  byte storedSpeed = motorSpeed;
-  //the speed to move forwards at slowly.
-  motorSpeed = slowSpeed;  
-  changeHeading(2);
-  
-  int leftOffset = 0;
-  int rightOffset = 0;
-  float turnFactor = 0.4;
-  
-  unsigned long startTime = millis();
-  while (true) {
-    //if the 
-    if (millis() - startTime >= duration) {
-        break; 
-    }
-    
-    //Populate sensor array.
-    for (byte i = 0; i < 6; i++) {
-        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
-        //To test what values the sensor array is reading. 
-        Serial.print(QRE_val_array[i]);
-        Serial.print(" ");
-    }
-    Serial.print("\n");
-    
-    if ((QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[2] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) \ 
-       or (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[2] == HIGH and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW)) {
-      //if 0 0 1 0 0  or 0 1 1 1 0 Go straight
-        //left motor is more powerful than the right motor so it's "default" is -60.
-        analogWrite(leftEnablePin, motorSpeed - leftOffset);
-        analogWrite(rightEnablePin, motorSpeed - rightOffset);
-        Serial.print("going forwards\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == HIGH and QRE_val_array[3] == LOW and QRE_val_array[4] == LOW) {
-      //if 0 1 - 0 0  then adjust RIGHT (because backwards)
-        analogWrite(leftEnablePin, (motorSpeed - leftOffset));
-        analogWrite(rightEnablePin, turnFactor*(motorSpeed - rightOffset));
-        Serial.print("Adjusting left\n");
-    } else if (QRE_val_array[0] == LOW and QRE_val_array[1] == LOW and QRE_val_array[3] == HIGH and QRE_val_array[4] == LOW) {
-        //if 0 0 - 1 0 then adjust LEFT (because backwards)
-        analogWrite(leftEnablePin, turnFactor*(motorSpeed-leftOffset));
-        analogWrite(rightEnablePin, (motorSpeed - rightOffset));
-        Serial.print("Adjusting right\n");
-    }
-  }
-  //change the robot's heading so that it's staying in place.
-  changeHeading(0);
-  //set motorSpeed back to normal. 
-  motorSpeed = storedSpeed;
-}
-
-void inchForwardsWithoutLines(unsigned long duration) {
-  //This function makes the robot drive forwards slowly for a set duration without line following.
-  
-  //store the motorSpeed so that we can change it back to normal afterwards.
-  byte storedSpeed = motorSpeed;
-  //the speed to move forwards at slowly.
-  motorSpeed = slowSpeed;  
-  changeHeading(1);
-  
-  int leftOffset = 0;
-  int rightOffset = 0;
-  //The offsets compensate for one motor being stronger or weaker than another. 
-  analogWrite(leftEnablePin, motorSpeed - leftOffset);
-  analogWrite(rightEnablePin, motorSpeed - rightOffset);
-
-  unsigned long startTime = millis();
-  while (true) {
-    //if the 
-    if (millis() - startTime >= duration) {
-        break; 
-    }
-  }
-  //change the robot's heading so that it's staying in place.
-  changeHeading(0);
-  //set motorSpeed back to normal
-  motorSpeed = storedSpeed;
-}
 
 void inchBackwardsWithoutLines(boolean toLine, unsigned long duration) {
   //This function makes the robot drive backwards slowly.
@@ -1001,38 +615,13 @@ void inchBackwardsWithoutLines(boolean toLine, unsigned long duration) {
   motorSpeed = storedSpeed;
 }
 
-void controlledTurn(unsigned long turnDuration, byte turnwise) {
-     //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is)
-    //3 --> clockwise, 4 --> counterclockwise.
-    Serial.println("The turn function has been called");
-    changeHeading(0);
-    
-    byte storedSpeed = motorSpeed;
-    //the speed to do a controlled turn. (at this speed , it takes 945 seconds to do a 90 degree turn.
-    motorSpeed = 255;  
-
-    changeHeading(turnwise);
-    
-    unsigned long startTime = millis();
-    while(true) {
-      //turn for a certain duration.
-      if (millis() - startTime >= turnDuration) {
-        break; 
-      }
-    }
-    motorSpeed = storedSpeed;
-    changeHeading(0);    
-}
-
 void turn(class robotPosition &botPos, byte turnwise)  {
     //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is)
     //3 --> clockwise, 4 --> counterclockwise.
-    Serial.println("THE TURN FUNCTION HAS BEEN CALLED, TURN STARTING NOW");
     changeHeading(0);
     //Delay long enough so that it doesn't immediately stop turning. 
     changeHeading(turnwise);
     delay(600);
-    Serial.println("The delay is over");
     //unsigned long turnDuration;
     //unsigned long startTime = millis();
     while(true) {
@@ -1049,14 +638,9 @@ void turn(class robotPosition &botPos, byte turnwise)  {
       if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
       //if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {}
           changeHeading(0);
-          Serial.println("WE ARE DONE TURNING, PUNY HUMAN");
           break;
       }
-      /*
-      if (millis() - startTime >= turnDuration) {
-        break; 
-      }*/
-      
+
     }
     changeHeading(0);
     // 3 --> clockwise, 4 --> counterclockwise. 
@@ -1112,87 +696,16 @@ void shortTurn(class robotPosition &botPos, byte turnwise)  {
       Serial.print("\n");
       //if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
       if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {
-      //if (QRE_val_array[2] == HIGH) {}
+       //if (QRE_val_array[2] == HIGH) {}
           changeHeading(0);
           Serial.println("WE ARE DONE TURNING, PUNY HUMAN");
           break;
-      }
-      /*
-      if (millis() - startTime >= turnDuration) {
-        break; 
-      }*/
-      
+      }      
     }
     changeHeading(0);
     // 3 --> clockwise, 4 --> counterclockwise. 
     //Change the direction we're facing in botPos. 
-    if(botPos.botDirection == 'n') {
-        if (turnwise == 4) {
-          botPos.botDirection == 'w';
-        }else if (turnwise == 3) {
-          botPos.botDirection == 'e';
-        }
-    } else if (botPos.botDirection == 'e') {
-      if (turnwise == 4) {
-          botPos.botDirection == 'n';
-        }else if (turnwise == 3) {
-          botPos.botDirection == 's';
-        }
-    } else if (botPos.botDirection == 's') {
-      if (turnwise == 4) {
-          botPos.botDirection == 'e';
-        }else if (turnwise == 3) {
-          botPos.botDirection == 'w';
-        }
-    } else if (botPos.botDirection == 'w') {
-      if (turnwise == 4) {
-          botPos.botDirection == 's';
-        }else if (turnwise == 3) {
-          botPos.botDirection == 'n';
-        }
-    }    
 }
-
-
-
-int callibratedTurn(byte turnwise)  {
-
-    //Controls the robot's wheels to make it turn 90 degrees clockwise / counterlclockwise (depending on what turnways is) and record how much time it takes.
-    //3 --> clockwise, 4 --> counterclockwise.
-    changeHeading(0);
-    //Delay long enough so that it doesn't immediately stop turning. 
-    changeHeading(turnwise);
-
-    unsigned long startTime = millis();
-    delay(500);
-    Serial.println("startedTurn");
-    while(true) {
-      //Keep turning until we're on a line. 
-      
-      //Read from sensors.
-      for (byte i = 0; i < 6; i++) {
-        QRE_val_array[i] =  binary_readAnalog(QRE_pin_array[i]);
-        //To test what values the sensor array is reading. 
-        Serial.print(QRE_val_array[i]);
-        Serial.print(" ");
-      }
-      Serial.print("\n");
-      if (QRE_val_array[0] == HIGH or QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH or  QRE_val_array[4] == HIGH) {
-      //if (QRE_val_array[1] == HIGH or QRE_val_array[2] == HIGH or QRE_val_array[3] == HIGH) {}
-          changeHeading(0);
-          Serial.println("WE ARE DONE TURNING, PUNY HUMAN");
-          break;
-      }
-    
-    }
-    unsigned long endTime = millis() - startTime;
-    changeHeading(0);
-    Serial.println(endTime);
-    return endTime;
-    
-    //to smartTurn X degrees, do a controlledTurn for endTurn /90 * X seconds.
-}
-
 
 
 void turnAdjust(byte turnwise)  {
@@ -1231,7 +744,7 @@ void turnAdjust(byte turnwise)  {
 
 
 void follow_directions(String  directions, class robotPosition &botPos) {
-    //input is a string of directions (which we get from the output of empty_solver().)
+    //input is a string of directions (which we get from the output of blockedSolver().)
     //This function calls all the lower level functions to make the robot follow the specified directions. 
     int num_directions = (int)directions.length();
     for (int i = 0; i < num_directions; i++) {
@@ -1313,7 +826,6 @@ int enterHopper(hopperData hoppers[4], byte index) {
   } else if (index == 2) {
       //We are entering the right fixed hopper, assume we're at (6, 5) facing east. 
       //First turn 45 degrees counterclockwise to be facing the hopper.
-      //controlledTurn(500, 3);  //Turn into position. 
       
       //Next, start going forwards into the hopper.
       changeHeading(1);
@@ -1352,6 +864,7 @@ void exitHopper(hopperData hoppers[4], byte index, byte &exitRow, byte &exitCol,
     exitRow = 6;
     exitCol = 1;
     exitDir = 'w';
+    Serial.println("Done");
 
   } else if (index == 2) {
     //We are exiting the right fixed hopper, assume we're at (6, 5) facing east. 

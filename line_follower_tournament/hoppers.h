@@ -86,41 +86,6 @@ String findNearestHopper(hopperData hoppers[4], robotPosition botPos, char arena
     
     //Iterate through the array of hoppers t
     for (byte i = 0; i < 4; i++) {
-       if (hoppers[i].numBalls > 0 and arena[hoppers[i].entryRow][hoppers[i].entryCol] != 'x') {
-         tempPath = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, hoppers[i].entryRow, hoppers[i].entryCol, arena, endDir);
-         tempPath += change_dir(endDir, hoppers[i].entryDir);
-         
-         if(tempPath.length() < dist_to_nearest) {
-            storedIndex = i;
-            dist_to_nearest = tempPath.length(); 
-            bestPath = tempPath;
-         }
-       }
-    }
-    //storedIndex now holds the index of the nearest hopper.
-    //bestPath is now the path to the nearest hopper.
-    hopperChosen = storedIndex;
-    return bestPath;
-}
-
-String findNearestHopperOld(hopperData hoppers[4], robotPosition botPos, char arena [8][7], byte &hopperChosen) {
-    //hoppers = {fixed left, variable left, fixed right, variable right}
-    //String blockedSolver(byte startRow, byte startCol, char dir, byte destRow, byte destCol, char arena[8][7], char &endDir);
-    //Find the hopper nearest to the robot, return a path to that hopper, change hopperChosen to be the index in hoppers[] of the chosen hopper
-      
-    //stores the index of the nearest non empty hopper.
-    byte storedIndex = 0;
-    //stores the distance to the nearest hopper
-    byte dist_to_nearest = 250;
-    //stores a temporary path
-    String tempPath;
-    //stores the best path
-    String bestPath = "";
-    //stores the direction after we hit the end of the path.
-    char endDir;
-    
-    //Iterate through the array of hoppers t
-    for (byte i = 0; i < 4; i++) {
        if (hoppers[i].numBalls > 0 and arena[hoppers[i].entryRow][hoppers[i].entryCol] != 'x' and arena[hoppers[i].exitRow][hoppers[i].exitCol] != 'x') {
          tempPath = blockedSolver(botPos.botRow, botPos.botCol, botPos.botDirection, hoppers[i].entryRow, hoppers[i].entryCol, arena, endDir);
          tempPath += change_dir(endDir, hoppers[i].entryDir);
@@ -188,7 +153,7 @@ void readSwitches(int dipSwitchArray[10], class hopperData &leftHopper, class ho
     leftHopper.hopperCol = (dipSwitchArray[2] == ON); 
     leftHopper.orientation = (dipSwitchArray[3] == ON);
     
-    rightHopper.hopperRow = 2 - leftHopper.hopperRow;
+    rightHopper.hopperRow = 2 - leftHopper.hopperCol;
     rightHopper.hopperCol = (dipSwitchArray[4] == ON) + 2; 
     rightHopper.orientation = (dipSwitchArray[5] == ON);
     
